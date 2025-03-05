@@ -6,7 +6,7 @@ use wasm_bindgen::prelude::{wasm_bindgen, JsValue};
 
 use std::cell::RefCell;
 
-use key_tuner_core::password::{PasswordGenerator, PasswordMode, PasswordSettings};
+use key_tuner_core::password::{PasswordData, PasswordGenerator, PasswordSettings};
 
 // WebAssemblyのメモリアロケータとしてwee_allocを使用
 #[cfg(feature = "wee_alloc")]
@@ -21,21 +21,19 @@ thread_local! {
 // フロントエンド用のパスワード設定
 #[derive(Debug, Clone)]
 struct PasswordConfig {
-    pass_phrase: String,
-    service_name: String,
-    version: String,
-    mode: PasswordMode,
-    length: usize,
+    data: PasswordData,
 }
 
 impl Default for PasswordConfig {
     fn default() -> Self {
         Self {
-            pass_phrase: "default passphrase".to_string(),
-            service_name: "default service".to_string(),
-            version: "1".to_string(),
-            mode: PasswordMode::Ex,
-            length: 12,
+            data: PasswordData {
+                pass_phrase: "default passphrase".to_string(),
+                service_name: "default service".to_string(),
+                version: "1".to_string(),
+                mode: "ex".to_string(),
+                length: "12".to_string(),
+            },
         }
     }
 }
@@ -43,13 +41,7 @@ impl Default for PasswordConfig {
 impl PasswordConfig {
     // PasswordSettingsに変換
     fn to_settings(&self) -> Result<PasswordSettings, String> {
-        PasswordSettings::new(
-            self.pass_phrase.clone(),
-            self.service_name.clone(),
-            self.version.clone(),
-            self.mode,
-            self.length,
-        )
+        PasswordSettings::try_from(self.data.clone()).map_err(|e| format!("{:?}", e))
     }
 }
 
@@ -71,7 +63,7 @@ pub fn generate_password() -> Result<String, JsValue> {
         let config = config.borrow();
         match config.to_settings() {
             Ok(settings) => Ok(PasswordGenerator::generate(&settings)),
-            Err(e) => Err(JsValue::from_str(e.as_str())),
+            Err(e) => Err(JsValue::from_str(&e)),
         }
     })
 }
@@ -79,35 +71,32 @@ pub fn generate_password() -> Result<String, JsValue> {
 #[wasm_bindgen]
 pub fn set_pass_phrase(phrase: String) {
     PASSWORD_CONFIG.with(|config| {
-        config.borrow_mut().pass_phrase = phrase;
+        config.borrow_mut().data.pass_phrase = phrase;
     });
 }
 
 #[wasm_bindgen]
 pub fn set_service_name(name: String) {
     PASSWORD_CONFIG.with(|config| {
-        config.borrow_mut().service_name = name;
+        config.borrow_mut().data.service_name = name;
     });
 }
 
 #[wasm_bindgen]
 pub fn set_version(version: String) {
     PASSWORD_CONFIG.with(|config| {
-        config.borrow_mut().version = version;
+        config.borrow_mut().data.version = version;
     });
 }
 
 #[wasm_bindgen]
 pub fn set_password_mode(mode: String) -> Result<(), JsValue> {
-    match PasswordMode::try_from(mode.as_str()) {
-        Ok(password_mode) => {
-            PASSWORD_CONFIG.with(|config| {
-                config.borrow_mut().mode = password_mode;
-            });
-            Ok(())
-        }
-        Err(e) => Err(JsValue::from_str(e.as_str())),
-    }
+    // モードの検証は PasswordSettings::try_from で行われるため、
+    // ここでは単に文字列を設定するだけ
+    PASSWORD_CONFIG.with(|config| {
+        config.borrow_mut().data.mode = mode;
+    });
+    Ok(())
 }
 
 #[wasm_bindgen]
@@ -120,7 +109,7 @@ pub fn set_password_length(length: usize) -> Result<(), JsValue> {
     }
 
     PASSWORD_CONFIG.with(|config| {
-        config.borrow_mut().length = length;
+        config.borrow_mut().data.length = length.to_string();
     });
 
     Ok(())
