@@ -1,0 +1,28 @@
+{
+  "name": "key-tuner",
+  "version": "0.1.0",
+  "description": "Password generator",
+  "private": true,
+  "workspaces": [
+    "web"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w web",
+    "build": "npm run build -w web",
+    "preview": "npm run preview -w web",
+    "test": "npm run test -w web && cargo test --workspace",
+    "build:wasm": "cd crates/web && wasm-pack build --target web --out-dir ../../web/src/js/wasm/pkg",
+    "clean": "rm -rf web/dist web/src/js/wasm/pkg"
+  },
+  "keywords": [
+    "password",
+    "generator",
+    "wasm",
+    "rust"
+  ],
+  "author": "shun@getto.systems",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
