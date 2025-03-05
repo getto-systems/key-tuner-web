@@ -1,98 +1,100 @@
 # key-tuner
 
-安全なパスワードを生成するツール
+A tool for generating secure passwords
 
-## 概要
+## Overview
 
-Key Tunerは、Rust/WebAssemblyを使用した安全なパスワード生成ツールです。フロントエンドはViteを使用し、バックエンドのロジックはRustで実装されています。
+Key Tuner is a secure password generation tool using Rust/WebAssembly. The frontend is built with Vite, and the backend logic is implemented in Rust.
 
-## 特徴
+## Features
 
-- Rustによる高速で安全なパスワード生成
-- WebAssemblyによるブラウザでの実行
-- カスタマイズ可能なパスワード設定
-  - 長さの調整
-  - 大文字/小文字/数字/記号の含有設定
-- シンプルで使いやすいUI
+- Fast and secure password generation with Rust
+- Browser execution via WebAssembly
+- Customizable password settings
+  - Adjustable length
+  - Inclusion settings for uppercase/lowercase letters, numbers, and symbols
+- Simple and user-friendly UI
 
-## プロジェクト構成
+## Project Structure
 
 ```
 key-tuner/
-├── crates/                     # Rustのクレート群
-│   ├── core/                   # コアロジック（パスワード生成など）
-│   └── web/                    # Web向けWASM実装
-├── web/                        # Webフロントエンド
-│   ├── public/                 # 静的ファイル
-│   ├── src/                    # ソースコード
-│   │   ├── assets/            # 画像、フォントなど
-│   │   ├── js/                # JavaScriptコード
-│   │   ├── styles/            # CSSファイル
-│   │   └── index.html         # メインHTML
-│   └── tests/                  # フロントエンドテスト
-└── scripts/                    # ビルド・デプロイスクリプト
+├── crates/                     # Rust crates
+│   ├── core/                   # Core logic (password generation, etc.)
+│   └── web/                    # Web-oriented WASM implementation
+├── web/                        # Web frontend
+│   ├── public/                 # Static files
+│   ├── src/                    # Source code
+│   │   ├── assets/            # Images, fonts, etc.
+│   │   ├── js/                # JavaScript code
+│   │   ├── styles/            # CSS files
+│   │   └── index.html         # Main HTML
+│   └── tests/                  # Frontend tests
+└── scripts/                    # Build and deployment scripts
 ```
 
-## 開発環境のセットアップ
+## Development Environment Setup
 
-### 必要なツール
+### Required Tools
 
-- [Rust](https://www.rust-lang.org/) (1.70.0以上)
+- [Rust](https://www.rust-lang.org/) (1.70.0 or higher)
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)
-- [Node.js](https://nodejs.org/) (18.x以上)
-- [npm](https://www.npmjs.com/) (9.x以上)
+- [Node.js](https://nodejs.org/) (18.x or higher)
+- [npm](https://www.npmjs.com/) (9.x or higher)
 
-### セットアップ手順
+### Setup Steps
 
-1. リポジトリをクローン
+1. Clone the repository
 
 ```bash
 git clone https://github.com/yourusername/key-tuner.git
 cd key-tuner
 ```
 
-2. 依存関係をインストール
+2. Install dependencies
 
 ```bash
 npm install
 ```
 
-3. WASMをビルド
+3. Build WASM
 
 ```bash
 npm run build:wasm
 ```
 
-4. 開発サーバーを起動
+4. Start the development server
 
 ```bash
 npm run dev
 ```
 
-これで http://localhost:3000 でアプリケーションにアクセスできます。
+You can now access the application at http://localhost:3000.
 
-## ビルド方法
+## Build Process
 
-本番用ビルドを作成するには:
+To create a production build:
 
 ```bash
 npm run build
 ```
 
-ビルド結果は `web/dist` ディレクトリに出力されます。
+The build output will be in the `web/dist` directory.
 
-## テスト
+## Testing
 
-テストを実行するには:
+To run tests:
 
 ```bash
 npm run test
 ```
 
-これにより、RustとJavaScriptの両方のテストが実行されます。
+This will run both Rust and JavaScript tests.
 
-## ライセンス
+## License
 
-key-tunerは[MIT](LICENSE)ライセンスの下で公開されています。
+key-tuner is released under the [GPL-3.0](LICENSE) license.
+
+This project includes a Rust language port of the cksum command from GNU coreutils. This implementation is provided under the terms of the GPL-3.0 license.
 
 Copyright &copy; since 2025 shun@getto.systems

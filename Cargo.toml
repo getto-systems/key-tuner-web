@@ -8,7 +8,7 @@ members = [
 version = "0.1.0"
 edition = "2021"
 authors = ["shun@getto.systems"]
-license = "MIT"
+license = "GPL-3.0"
 
 [workspace.dependencies]
 wasm-bindgen = "0.2"
