@@ -2,9 +2,11 @@
 //!
 //! WebAssembly向けのパスワード生成インターフェース
 
-use key_tuner_core::{PasswordGenerator, PasswordSettings, PasswordMode};
+use wasm_bindgen::prelude::{wasm_bindgen, JsValue};
+
 use std::cell::RefCell;
-use wasm_bindgen::prelude::*;
+
+use key_tuner_core::password::{PasswordGenerator, PasswordMode, PasswordSettings};
 
 // WebAssemblyのメモリアロケータとしてwee_allocを使用
 #[cfg(feature = "wee_alloc")]
@@ -57,7 +59,7 @@ pub fn init() {
     // パニック時にコンソールにエラーを出力
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
-    
+
     // ログ出力
     web_sys::console::log_1(&"Key Tuner WASM module initialized".into());
 }
@@ -69,7 +71,7 @@ pub fn generate_password() -> Result<String, JsValue> {
         let config = config.borrow();
         match config.to_settings() {
             Ok(settings) => Ok(PasswordGenerator::generate(&settings)),
-            Err(e) => Err(JsValue::from_str(&e)),
+            Err(e) => Err(JsValue::from_str(e.as_str())),
         }
     })
 }
@@ -103,20 +105,23 @@ pub fn set_password_mode(mode: String) -> Result<(), JsValue> {
                 config.borrow_mut().mode = password_mode;
             });
             Ok(())
-        },
-        Err(e) => Err(JsValue::from_str(&e)),
+        }
+        Err(e) => Err(JsValue::from_str(e.as_str())),
     }
 }
 
 #[wasm_bindgen]
 pub fn set_password_length(length: usize) -> Result<(), JsValue> {
     if length < 8 || length > 64 {
-        return Err(JsValue::from_str(&format!("パスワードの長さは8から64の間である必要があります: {}", length)));
+        return Err(JsValue::from_str(&format!(
+            "パスワードの長さは8から64の間である必要があります: {}",
+            length
+        )));
     }
-    
+
     PASSWORD_CONFIG.with(|config| {
         config.borrow_mut().length = length;
     });
-    
+
     Ok(())
 }
