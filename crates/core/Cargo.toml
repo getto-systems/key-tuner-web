@@ -7,4 +7,3 @@ license.workspace = true
 description = "Core logic for key-tuner password generator"
 
 [dependencies]
-crc = "3.0"
