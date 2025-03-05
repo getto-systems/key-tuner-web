@@ -2,7 +2,7 @@
 //!
 //! パスワード生成のコアロジックを提供するクレート
 
-use sha2::{Sha256, Digest};
+use crc::{Crc, CRC_32_ISO_HDLC};
 use std::fmt;
 
 /// パスワード生成モード
@@ -78,6 +78,9 @@ impl PasswordSettings {
     }
 }
 
+/// CRC-32計算のためのインスタンス
+const CRC: Crc<u32> = Crc::<u32>::new(&CRC_32_ISO_HDLC);
+
 /// パスワード生成器
 #[derive(Debug)]
 pub struct PasswordGenerator;
@@ -85,96 +88,74 @@ pub struct PasswordGenerator;
 impl PasswordGenerator {
     /// パスワードを生成
     pub fn generate(settings: &PasswordSettings) -> String {
-        // 入力文字列を結合
-        let input = format!(
-            "{}:{}:{}:{}",
-            settings.pass_phrase,
-            settings.service_name,
-            settings.version,
-            settings.mode
-        );
-
-        // SHA-256ハッシュを計算
-        let mut hasher = Sha256::new();
-        hasher.update(input.as_bytes());
-        let hash = hasher.finalize();
-        let hash_hex = format!("{:x}", hash);
-
+        // 各入力文字列のCRC-32チェックサムの合計を計算
+        let mut sum = 0;
+        sum += Self::calculate_checksum_sum(&settings.pass_phrase);
+        sum += Self::calculate_checksum_sum(&settings.service_name);
+        sum += Self::calculate_checksum_sum(&settings.version);
+        
+        // 合計値を長さ倍にする
+        sum *= settings.length;
+        
+        // シードを作成（合計値を2回繰り返す）
+        let seed = format!("{}{}", sum, sum);
+        
         // モードに応じた文字セットを選択
         let charset = match settings.mode {
-            PasswordMode::Ex => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?",
-            PasswordMode::Full => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-            PasswordMode::Short => "abcdefghijklmnopqrstuvwxyz0123456789",
+            PasswordMode::Ex => "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-/:;()&@.,?!'[]{}#%^*+=_|<>$",
+            PasswordMode::Full => "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@#&*%!?@#&*%!?@#&*%!?",
+            PasswordMode::Short => "0123456789abcdefghijklmnopqrstuvwxyz",
         };
-
-        // ハッシュ値を使用してパスワードを生成
-        let mut password = String::with_capacity(settings.length);
-        let charset_len = charset.len();
-        let charset_chars: Vec<char> = charset.chars().collect();
-
-        for i in 0..settings.length {
-            // ハッシュの各バイトを使用して文字を選択
-            let idx = (hash[i % hash.len()] as usize) % charset_len;
-            password.push(charset_chars[idx]);
+        
+        // パスワードを生成
+        let mut result = String::with_capacity(settings.length);
+        let mut last_char = None;
+        let mut i = 0;
+        
+        while result.len() < settings.length {
+            // シードから3桁の数値を取得
+            let seed_index = i % seed.len();
+            let end_index = std::cmp::min(seed_index + 3, seed.len());
+            let mut seed_number = seed[seed_index..end_index].parse::<usize>().unwrap_or(0);
+            
+            // 先頭の0を除去（シェルスクリプトの ${seed_number#0} に相当）
+            if seed_number >= 100 {
+                seed_number %= 100;
+            }
+            if seed_number >= 10 {
+                seed_number %= 10;
+            }
+            
+            // 文字のインデックスを計算
+            let index = (seed_number * (i + 1)) % charset.len();
+            
+            // 文字を取得
+            let current_char = charset.chars().nth(index).unwrap();
+            
+            // 前回と同じ文字でなければ追加
+            if last_char != Some(current_char) {
+                result.push(current_char);
+                last_char = Some(current_char);
+            }
+            
+            i += 1;
         }
-
-        // モードに応じて文字要件を確認
-        match settings.mode {
-            PasswordMode::Ex => ensure_ex_requirements(&mut password, &charset_chars),
-            PasswordMode::Full => ensure_full_requirements(&mut password, &charset_chars),
-            PasswordMode::Short => password, // shortモードは追加の要件なし
+        
+        result
+    }
+    
+    /// 文字列の各文字のCRC-32チェックサムの合計を計算
+    fn calculate_checksum_sum(input: &str) -> usize {
+        let mut sum = 0;
+        
+        for c in input.chars() {
+            // 各文字に対してCRC-32を計算
+            let checksum = CRC.checksum(c.to_string().as_bytes());
+            sum += checksum as usize;
         }
+        
+        sum
     }
-}
-
-/// Exモードの要件（大文字、小文字、数字、記号を含む）を確保
-fn ensure_ex_requirements(password: &mut String, charset: &[char]) -> String {
-    let has_uppercase = password.chars().any(|c| c.is_ascii_uppercase());
-    let has_lowercase = password.chars().any(|c| c.is_ascii_lowercase());
-    let has_number = password.chars().any(|c| c.is_ascii_digit());
-    let has_symbol = password.chars().any(|c| !c.is_alphanumeric());
-
-    let mut chars: Vec<char> = password.chars().collect();
-    let len = chars.len();
-
-    // 各カテゴリが含まれていない場合は追加
-    if !has_uppercase {
-        chars[0] = 'A';
-    }
-    if !has_lowercase {
-        chars[1 % len] = 'a';
-    }
-    if !has_number {
-        chars[2 % len] = '1';
-    }
-    if !has_symbol {
-        chars[3 % len] = '!';
-    }
-
-    chars.into_iter().collect()
-}
-
-/// Fullモードの要件（大文字、小文字、数字を含む）を確保
-fn ensure_full_requirements(password: &mut String, charset: &[char]) -> String {
-    let has_uppercase = password.chars().any(|c| c.is_ascii_uppercase());
-    let has_lowercase = password.chars().any(|c| c.is_ascii_lowercase());
-    let has_number = password.chars().any(|c| c.is_ascii_digit());
-
-    let mut chars: Vec<char> = password.chars().collect();
-    let len = chars.len();
-
-    // 各カテゴリが含まれていない場合は追加
-    if !has_uppercase {
-        chars[0] = 'A';
-    }
-    if !has_lowercase {
-        chars[1 % len] = 'a';
-    }
-    if !has_number {
-        chars[2 % len] = '1';
-    }
-
-    chars.into_iter().collect()
 }
 
 #[cfg(test)]
@@ -243,7 +224,7 @@ mod tests {
     }
 
     #[test]
-    fn test_password_ex_mode_requirements() {
+    fn test_password_ex_mode_charset() {
         let settings = PasswordSettings::new(
             "my passphrase".to_string(),
             "example.com".to_string(),
@@ -254,14 +235,19 @@ mod tests {
         
         let password = PasswordGenerator::generate(&settings);
         
-        assert!(password.chars().any(|c| c.is_ascii_uppercase()));
-        assert!(password.chars().any(|c| c.is_ascii_lowercase()));
-        assert!(password.chars().any(|c| c.is_ascii_digit()));
-        assert!(password.chars().any(|c| !c.is_alphanumeric()));
+        // Exモードでは特殊文字を含む可能性がある
+        for c in password.chars() {
+            assert!(
+                c.is_ascii_digit() ||
+                c.is_ascii_lowercase() ||
+                c.is_ascii_uppercase() ||
+                "/-:;()&@.,?!'[]{}#%^*+=_|<>$".contains(c)
+            );
+        }
     }
 
     #[test]
-    fn test_password_full_mode_requirements() {
+    fn test_password_full_mode_charset() {
         let settings = PasswordSettings::new(
             "my passphrase".to_string(),
             "example.com".to_string(),
@@ -272,15 +258,19 @@ mod tests {
         
         let password = PasswordGenerator::generate(&settings);
         
-        assert!(password.chars().any(|c| c.is_ascii_uppercase()));
-        assert!(password.chars().any(|c| c.is_ascii_lowercase()));
-        assert!(password.chars().any(|c| c.is_ascii_digit()));
-        // Fullモードでは記号は含まれない
-        assert!(!password.chars().any(|c| !c.is_alphanumeric()));
+        // Fullモードでは特定の文字セットのみを使用
+        for c in password.chars() {
+            assert!(
+                c.is_ascii_digit() ||
+                c.is_ascii_lowercase() ||
+                c.is_ascii_uppercase() ||
+                "@#&*%!?".contains(c)
+            );
+        }
     }
 
     #[test]
-    fn test_password_short_mode_requirements() {
+    fn test_password_short_mode_charset() {
         let settings = PasswordSettings::new(
             "my passphrase".to_string(),
             "example.com".to_string(),
@@ -291,13 +281,10 @@ mod tests {
         
         let password = PasswordGenerator::generate(&settings);
         
-        // Shortモードでは大文字は含まれない
-        assert!(!password.chars().any(|c| c.is_ascii_uppercase()));
         // Shortモードでは小文字と数字のみ
-        assert!(password.chars().any(|c| c.is_ascii_lowercase()));
-        assert!(password.chars().any(|c| c.is_ascii_digit()));
-        // Shortモードでは記号は含まれない
-        assert!(!password.chars().any(|c| !c.is_alphanumeric()));
+        for c in password.chars() {
+            assert!(c.is_ascii_digit() || c.is_ascii_lowercase());
+        }
     }
 
     #[test]
@@ -330,5 +317,20 @@ mod tests {
         
         // 異なる入力からは異なるパスワードが生成されるはず
         assert_ne!(password1, password3);
+    }
+    
+    #[test]
+    fn test_checksum_calculation() {
+        // 単一文字のチェックサム計算をテスト
+        let checksum_a = PasswordGenerator::calculate_checksum_sum("a");
+        let checksum_b = PasswordGenerator::calculate_checksum_sum("b");
+        
+        // 異なる文字は異なるチェックサム値を持つはず
+        assert_ne!(checksum_a, checksum_b);
+        
+        // 同じ文字列は同じチェックサム値を持つはず
+        let checksum1 = PasswordGenerator::calculate_checksum_sum("test");
+        let checksum2 = PasswordGenerator::calculate_checksum_sum("test");
+        assert_eq!(checksum1, checksum2);
     }
 }

@@ -7,5 +7,4 @@ license.workspace = true
 description = "Core logic for key-tuner password generator"
 
 [dependencies]
-sha2 = "0.10"
-getrandom = { version = "0.2", features = ["js"] }
+crc = "3.0"
