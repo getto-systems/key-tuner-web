@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Key Tuner - パスワードジェネレーター</title>
+  <meta name="description" content="安全なパスワードを生成するツール">
+  <link rel="stylesheet" href="./styles/main.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Key Tuner</h1>
+      <p>安全なパスワードを生成するツール</p>
+    </header>
+    
+    <main>
+      <div class="password-container">
+        <div id="password-output" class="password-output">パスワードがここに表示されます</div>
+        <button id="copy-button" class="button">コピー</button>
+      </div>
+      
+      <div class="controls">
+        <div class="control-group">
+          <label for="password-length">長さ: <span id="length-value">12</span></label>
+          <input type="range" id="password-length" min="8" max="32" value="12">
+        </div>
+        
+        <div class="control-group">
+          <label>
+            <input type="checkbox" id="include-uppercase" checked>
+            大文字を含める (A-Z)
+          </label>
+        </div>
+        
+        <div class="control-group">
+          <label>
+            <input type="checkbox" id="include-lowercase" checked>
+            小文字を含める (a-z)
+          </label>
+        </div>
+        
+        <div class="control-group">
+          <label>
+            <input type="checkbox" id="include-numbers" checked>
+            数字を含める (0-9)
+          </label>
+        </div>
+        
+        <div class="control-group">
+          <label>
+            <input type="checkbox" id="include-symbols">
+            記号を含める (!@#$%^&*)
+          </label>
+        </div>
+      </div>
+      
+      <button id="generate-button" class="button primary">パスワードを生成</button>
+    </main>
+    
+    <footer>
+      <p>&copy; since 2025 shun@getto.systems</p>
+    </footer>
+  </div>
+  
+  <script type="module" src="./js/index.js"></script>
+</body>
+</html>

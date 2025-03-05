@@ -1,0 +1,20 @@
+[package]
+name = "key-tuner-web"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "WebAssembly implementation for key-tuner password generator"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+key-tuner-core = { path = "../core" }
+wasm-bindgen.workspace = true
+js-sys.workspace = true
+web-sys.workspace = true
+wee_alloc = "0.4.5"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
