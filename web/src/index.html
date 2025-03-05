@@ -22,36 +22,32 @@
       
       <div class="controls">
         <div class="control-group">
+          <label for="pass-phrase">パスフレーズ</label>
+          <input type="text" id="pass-phrase" placeholder="あなたの秘密のフレーズを入力してください" value="default passphrase">
+        </div>
+        
+        <div class="control-group">
+          <label for="service-name">サービス名</label>
+          <input type="text" id="service-name" placeholder="パスワードを使用するサービス名を入力してください" value="default service">
+        </div>
+        
+        <div class="control-group">
+          <label for="version">バージョン</label>
+          <input type="text" id="version" placeholder="バージョン番号を入力してください" value="1">
+        </div>
+        
+        <div class="control-group">
+          <label for="password-mode">生成モード</label>
+          <select id="password-mode">
+            <option value="ex" selected>Ex: 大文字小文字数字記号を含む</option>
+            <option value="full">Full: 大文字小文字数字を含む</option>
+            <option value="short">Short: 小文字数字のみ</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
           <label for="password-length">長さ: <span id="length-value">12</span></label>
-          <input type="range" id="password-length" min="8" max="32" value="12">
-        </div>
-        
-        <div class="control-group">
-          <label>
-            <input type="checkbox" id="include-uppercase" checked>
-            大文字を含める (A-Z)
-          </label>
-        </div>
-        
-        <div class="control-group">
-          <label>
-            <input type="checkbox" id="include-lowercase" checked>
-            小文字を含める (a-z)
-          </label>
-        </div>
-        
-        <div class="control-group">
-          <label>
-            <input type="checkbox" id="include-numbers" checked>
-            数字を含める (0-9)
-          </label>
-        </div>
-        
-        <div class="control-group">
-          <label>
-            <input type="checkbox" id="include-symbols">
-            記号を含める (!@#$%^&*)
-          </label>
+          <input type="range" id="password-length" min="8" max="64" value="12">
         </div>
       </div>
       
