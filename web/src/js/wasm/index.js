@@ -12,7 +12,7 @@ export async function initWasm() {
     console.log('WASM module initialized successfully');
     return wasmModule;
     
-    // 開発用モックは不要になりました
+    // 開発用モックを使用する場合はこちらを有効化
     // console.log('WASM module mock initialized');
     // return createWasmMock();
   } catch (error) {
@@ -26,73 +26,123 @@ export async function initWasm() {
  * 実際のWASMモジュールが利用可能になったら削除します
  */
 function createWasmMock() {
-  let passwordLength = 12;
-  let includeUppercase = true;
-  let includeLowercase = true;
-  let includeNumbers = true;
-  let includeSymbols = false;
+  let passPhrase = "default passphrase";
+  let serviceName = "default service";
+  let version = "1";
+  let mode = "ex";
+  let length = 12;
   
   return {
     // 設定メソッド
-    setPasswordLength: (length) => {
-      console.log(`Mock: Setting password length to ${length}`);
-      passwordLength = length;
+    set_pass_phrase: (phrase) => {
+      console.log(`Mock: Setting pass phrase to ${phrase}`);
+      passPhrase = phrase;
     },
     
-    setIncludeUppercase: (include) => {
-      console.log(`Mock: Setting include uppercase to ${include}`);
-      includeUppercase = include;
+    set_service_name: (name) => {
+      console.log(`Mock: Setting service name to ${name}`);
+      serviceName = name;
     },
     
-    setIncludeLowercase: (include) => {
-      console.log(`Mock: Setting include lowercase to ${include}`);
-      includeLowercase = include;
+    set_version: (ver) => {
+      console.log(`Mock: Setting version to ${ver}`);
+      version = ver;
     },
     
-    setIncludeNumbers: (include) => {
-      console.log(`Mock: Setting include numbers to ${include}`);
-      includeNumbers = include;
+    set_password_mode: (m) => {
+      console.log(`Mock: Setting password mode to ${m}`);
+      if (!['ex', 'full', 'short'].includes(m)) {
+        throw new Error(`Invalid password mode: ${m}`);
+      }
+      mode = m;
     },
     
-    setIncludeSymbols: (include) => {
-      console.log(`Mock: Setting include symbols to ${include}`);
-      includeSymbols = include;
+    set_password_length: (len) => {
+      console.log(`Mock: Setting password length to ${len}`);
+      if (len < 8 || len > 64) {
+        throw new Error(`Password length must be between 8 and 64: ${len}`);
+      }
+      length = len;
     },
     
     // パスワード生成メソッド
-    generatePassword: () => {
+    generate_password: () => {
       console.log('Mock: Generating password with settings:', {
-        passwordLength,
-        includeUppercase,
-        includeLowercase,
-        includeNumbers,
-        includeSymbols
+        passPhrase,
+        serviceName,
+        version,
+        mode,
+        length
       });
       
       // 簡易的なモックパスワード生成
-      const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
-      const numberChars = '0123456789';
-      const symbolChars = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+      // 実際の実装では、パスフレーズ、サービス名、バージョンに基づいて
+      // 決定論的にパスワードを生成する必要があります
       
+      // モードに応じた文字セットを選択
       let chars = '';
-      if (includeUppercase) chars += uppercaseChars;
-      if (includeLowercase) chars += lowercaseChars;
-      if (includeNumbers) chars += numberChars;
-      if (includeSymbols) chars += symbolChars;
-      
-      // 少なくとも1つのカテゴリを含める
-      if (chars.length === 0) {
-        chars = lowercaseChars;
+      switch (mode) {
+        case 'ex':
+          chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+          break;
+        case 'full':
+          chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+          break;
+        case 'short':
+          chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+          break;
       }
       
+      // 入力文字列からシード値を生成
+      const seed = hashString(`${passPhrase}:${serviceName}:${version}:${mode}`);
+      
+      // シード値を使用してパスワードを生成
       let password = '';
-      for (let i = 0; i < passwordLength; i++) {
-        const randomIndex = Math.floor(Math.random() * chars.length);
+      for (let i = 0; i < length; i++) {
+        const randomIndex = Math.abs(seed[i % seed.length]) % chars.length;
         password += chars[randomIndex];
       }
       
+      // モードに応じた文字要件を確保
+      if (mode === 'ex') {
+        // 大文字、小文字、数字、記号を含むことを確保
+        if (!/[A-Z]/.test(password)) password = replaceAt(password, 0, 'A');
+        if (!/[a-z]/.test(password)) password = replaceAt(password, 1 % length, 'a');
+        if (!/[0-9]/.test(password)) password = replaceAt(password, 2 % length, '1');
+        if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) password = replaceAt(password, 3 % length, '!');
+      } else if (mode === 'full') {
+        // 大文字、小文字、数字を含むことを確保
+        if (!/[A-Z]/.test(password)) password = replaceAt(password, 0, 'A');
+        if (!/[a-z]/.test(password)) password = replaceAt(password, 1 % length, 'a');
+        if (!/[0-9]/.test(password)) password = replaceAt(password, 2 % length, '1');
+      }
+      
       return password;
+    },
+    
+    // 現在の設定を取得
+    get_current_config: () => {
+      return {
+        passPhrase,
+        serviceName,
+        version,
+        mode,
+        length
+      };
     }
   };
+}
+
+// 文字列をハッシュ化する簡易関数
+function hashString(str) {
+  let hash = Array(16).fill(0);
+  for (let i = 0; i < str.length; i++) {
+    hash[i % 16] = (hash[i % 16] + str.charCodeAt(i)) % 256;
+  }
+  return hash;
+}
+
+// 文字列の特定の位置の文字を置き換える
+function replaceAt(str, index, replacement) {
+  return str.substring(0, index) + replacement + str.substring(index + 1);
 }
