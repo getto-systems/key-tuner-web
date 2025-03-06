@@ -38,13 +38,6 @@ impl Default for PasswordConfig {
     }
 }
 
-impl PasswordConfig {
-    // ValidatedPasswordSettingsに変換
-    fn to_settings(&self) -> Result<ValidatedPasswordSettings, String> {
-        ValidatedPasswordSettings::try_from(self.data.clone()).map_err(|e| format!("{:?}", e))
-    }
-}
-
 // 初期化関数
 #[wasm_bindgen(start)]
 pub fn init() {
@@ -61,10 +54,9 @@ pub fn init() {
 pub fn generate_password() -> Result<String, JsValue> {
     PASSWORD_CONFIG.with(|config| {
         let config = config.borrow();
-        match config.to_settings() {
-            Ok(settings) => Ok(PasswordGenerator::generate(&settings)),
-            Err(e) => Err(JsValue::from_str(&e)),
-        }
+        // 直接PasswordSettingsを使用
+        PasswordGenerator::generate(&config.data)
+            .map_err(|e| JsValue::from_str(&format!("{:?}", e)))
     })
 }
 
