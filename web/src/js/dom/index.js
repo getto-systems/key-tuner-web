@@ -47,17 +47,6 @@ export function setupDom(wasm) {
   }
   
   /**
-   * すべてのエラーメッセージをクリアする
-   */
-  function clearAllErrors() {
-    hideError(passPhraseError);
-    hideError(serviceNameError);
-    hideError(versionError);
-    hideError(passwordModeError);
-    hideError(passwordLengthError);
-  }
-
-  /**
    * 復帰不可能なエラーを表示する
    * @param {string} errorMessage - エラーメッセージ
    */
@@ -246,9 +235,6 @@ export function setupDom(wasm) {
     wasm.set_version(version.value);
     wasm.set_password_mode(passwordMode.value);
     wasm.set_password_length(passwordLength.value);
-    
-    // 初期化成功時にエラーメッセージをクリア
-    clearAllErrors();
   } catch (error) {
     console.error('Failed to initialize settings:', error);
     showFatalError(`初期化エラー: ${error.message || error}`);
