@@ -24,7 +24,7 @@ export function setupDom(initWasm: () => WasmModule): void {
 
     try {
         // WASMモジュールを初期化して安全な呼び出し関数を作成
-        const wasmCall = initWasmCall<DomElements>(initWasm(), fatalError);
+        const wasmCall = initWasmCall(initWasm(), fatalError);
 
         // イベントハンドラを宣言的に設定
         setupEventHandlers(elements, wasmCall);
@@ -67,7 +67,7 @@ function initDomElements(): {
 } | null {
     // 致命的エラー要素の参照を取得
     const fatalErrorElements = getFatalErrorElements();
-    const fatalError = createFatalErrorHandler<DomElements>(fatalErrorElements, disableInputFields);
+    const fatalError = createFatalErrorHandler(fatalErrorElements, disableInputFields);
 
     // DOM要素の参照を取得
     const elements = getDomElements();
