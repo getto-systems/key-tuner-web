@@ -30,24 +30,20 @@ export function setupDom(initWasm: () => WasmModule): void {
     const fatalErrorMessage = document.getElementById("fatal-error-message") as HTMLElement | null;
 
     /**
-     * エラーメッセージを表示する
+     * エラーメッセージを設定する（表示または非表示）
      * @param {HTMLElement | null} element - エラーメッセージ要素
-     * @param {string} message - 表示するエラーメッセージ
+     * @param {string | ""} message - 表示するエラーメッセージ（空文字列の場合は非表示）
      */
-    function showError(element: HTMLElement | null, message: string): void {
+    function setError(element: HTMLElement | null, message: "" | string): void {
         if (!element) return;
-        element.textContent = message;
-        element.classList.add("show");
-    }
 
-    /**
-     * エラーメッセージを非表示にする
-     * @param {HTMLElement | null} element - エラーメッセージ要素
-     */
-    function hideError(element: HTMLElement | null): void {
-        if (!element) return;
-        element.textContent = "";
-        element.classList.remove("show");
+        if (message === "") {
+            element.textContent = "";
+            element.classList.remove("show");
+        } else {
+            element.textContent = message;
+            element.classList.add("show");
+        }
     }
 
     /**
@@ -88,11 +84,7 @@ export function setupDom(initWasm: () => WasmModule): void {
      * @param {string | null} errorMessage - エラーメッセージ
      */
     function draw_pass_phrase_error(errorMessage: string | null): void {
-        if (errorMessage) {
-            showError(passPhraseError, errorMessage);
-        } else {
-            hideError(passPhraseError);
-        }
+        setError(passPhraseError, errorMessage || "");
     }
 
     /**
@@ -100,11 +92,7 @@ export function setupDom(initWasm: () => WasmModule): void {
      * @param {string | null} errorMessage - エラーメッセージ
      */
     function draw_service_name_error(errorMessage: string | null): void {
-        if (errorMessage) {
-            showError(serviceNameError, errorMessage);
-        } else {
-            hideError(serviceNameError);
-        }
+        setError(serviceNameError, errorMessage || "");
     }
 
     /**
@@ -112,11 +100,7 @@ export function setupDom(initWasm: () => WasmModule): void {
      * @param {string | null} errorMessage - エラーメッセージ
      */
     function draw_version_error(errorMessage: string | null): void {
-        if (errorMessage) {
-            showError(versionError, errorMessage);
-        } else {
-            hideError(versionError);
-        }
+        setError(versionError, errorMessage || "");
     }
 
     /**
@@ -124,11 +108,7 @@ export function setupDom(initWasm: () => WasmModule): void {
      * @param {string | null} errorMessage - エラーメッセージ
      */
     function draw_password_mode_error(errorMessage: string | null): void {
-        if (errorMessage) {
-            showError(passwordModeError, errorMessage);
-        } else {
-            hideError(passwordModeError);
-        }
+        setError(passwordModeError, errorMessage || "");
     }
 
     /**
@@ -136,11 +116,7 @@ export function setupDom(initWasm: () => WasmModule): void {
      * @param {string | null} errorMessage - エラーメッセージ
      */
     function draw_password_length_error(errorMessage: string | null): void {
-        if (errorMessage) {
-            showError(passwordLengthError, errorMessage);
-        } else {
-            hideError(passwordLengthError);
-        }
+        setError(passwordLengthError, errorMessage || "");
     }
 
     // WASMから呼び出される関数をグローバルスコープに割り当て
