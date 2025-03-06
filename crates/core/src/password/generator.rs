@@ -1,10 +1,10 @@
-mod validate;
+mod settings_validator;
 
-use crate::cksum::Cksum;
+use crate::crypto::cksum::Cksum;
 
 use crate::password::{
     data::{PasswordMode, PasswordSettings},
-    validation::PasswordError,
+    error::PasswordError,
 };
 
 /// パスワード生成器
@@ -13,7 +13,7 @@ pub struct PasswordGenerator;
 
 /// パスワード生成の設定
 #[derive(Debug, Clone)]
-pub struct ValidatedPasswordSettings<'a> {
+struct ValidatedPasswordSettings<'a> {
     /// パスフレーズ
     pass_phrase: &'a str,
     /// サービス名
