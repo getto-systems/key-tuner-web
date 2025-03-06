@@ -6,7 +6,7 @@ use wasm_bindgen::prelude::{wasm_bindgen, JsValue};
 
 use std::cell::RefCell;
 
-use key_tuner_core::password::{PasswordSettings, PasswordGenerator, ValidatedPasswordSettings};
+use key_tuner_core::{PasswordGenerator, PasswordSettings};
 
 // WebAssemblyのメモリアロケータとしてwee_allocを使用
 #[cfg(feature = "wee_alloc")]
@@ -21,13 +21,13 @@ thread_local! {
 // フロントエンド用のパスワード設定
 #[derive(Debug, Clone)]
 struct PasswordConfig {
-    data: PasswordSettings,
+    settings: PasswordSettings,
 }
 
 impl Default for PasswordConfig {
     fn default() -> Self {
         Self {
-            data: PasswordSettings {
+            settings: PasswordSettings {
                 pass_phrase: "default passphrase".to_string(),
                 service_name: "default service".to_string(),
                 version: "1".to_string(),
@@ -44,9 +44,6 @@ pub fn init() {
     // パニック時にコンソールにエラーを出力
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
-
-    // ログ出力
-    web_sys::console::log_1(&"Key Tuner WASM module initialized".into());
 }
 
 // JavaScriptから呼び出し可能な関数群
@@ -55,7 +52,7 @@ pub fn generate_password() -> Result<String, JsValue> {
     PASSWORD_CONFIG.with(|config| {
         let config = config.borrow();
         // 直接PasswordSettingsを使用
-        PasswordGenerator::generate(&config.data)
+        PasswordGenerator::generate(&config.settings)
             .map_err(|e| JsValue::from_str(&format!("{:?}", e)))
     })
 }
@@ -63,21 +60,21 @@ pub fn generate_password() -> Result<String, JsValue> {
 #[wasm_bindgen]
 pub fn set_pass_phrase(phrase: String) {
     PASSWORD_CONFIG.with(|config| {
-        config.borrow_mut().data.pass_phrase = phrase;
+        config.borrow_mut().settings.pass_phrase = phrase;
     });
 }
 
 #[wasm_bindgen]
 pub fn set_service_name(name: String) {
     PASSWORD_CONFIG.with(|config| {
-        config.borrow_mut().data.service_name = name;
+        config.borrow_mut().settings.service_name = name;
     });
 }
 
 #[wasm_bindgen]
 pub fn set_version(version: String) {
     PASSWORD_CONFIG.with(|config| {
-        config.borrow_mut().data.version = version;
+        config.borrow_mut().settings.version = version;
     });
 }
 
@@ -86,7 +83,7 @@ pub fn set_password_mode(mode: String) -> Result<(), JsValue> {
     // モードの検証は PasswordSettings::try_from で行われるため、
     // ここでは単に文字列を設定するだけ
     PASSWORD_CONFIG.with(|config| {
-        config.borrow_mut().data.mode = mode;
+        config.borrow_mut().settings.mode = mode;
     });
     Ok(())
 }
@@ -101,7 +98,7 @@ pub fn set_password_length(length: usize) -> Result<(), JsValue> {
     }
 
     PASSWORD_CONFIG.with(|config| {
-        config.borrow_mut().data.length = length.to_string();
+        config.borrow_mut().settings.length = length.to_string();
     });
 
     Ok(())

@@ -3,8 +3,6 @@
 //! このモジュールは、POSIX cksum コマンドと互換性のある
 //! CRC-32チェックサム計算機能を提供します。
 
-use std::io::{self, Read};
-
 /// CRCテーブル
 ///
 /// POSIX cksum で使用される CRC-32 テーブル
@@ -97,33 +95,11 @@ impl Cksum {
         self.length
     }
 
-    /// リーダーからデータを読み込み、CRCを計算します
-    pub fn compute_reader<R: Read>(&mut self, reader: &mut R) -> io::Result<()> {
-        let mut buffer = [0u8; 16384]; // 16KBのバッファ
-
-        loop {
-            let bytes_read = reader.read(&mut buffer)?;
-            if bytes_read == 0 {
-                break;
-            }
-            self.update(&buffer[..bytes_read]);
-        }
-
-        Ok(())
-    }
-
     /// バイトスライスからCRCを計算します
     pub fn compute_bytes(bytes: &[u8]) -> (u32, u64) {
         let mut cksum = Self::new();
         cksum.update(bytes);
         (cksum.finalize(), cksum.length())
-    }
-
-    /// リーダーからCRCを計算します
-    pub fn compute<R: Read>(reader: &mut R) -> io::Result<(u32, u64)> {
-        let mut cksum = Self::new();
-        cksum.compute_reader(reader)?;
-        Ok((cksum.finalize(), cksum.length()))
     }
 }
 
@@ -136,7 +112,6 @@ impl Default for Cksum {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Cursor;
 
     #[test]
     fn test_empty_input() {
@@ -160,20 +135,6 @@ mod tests {
         let (crc, length) = Cksum::compute_bytes(input);
         assert_eq!(length, 43);
         assert_eq!(crc, 2074844392);
-    }
-
-    #[test]
-    fn test_reader_input() {
-        let input = b"Hello, world!";
-        let mut cursor = Cursor::new(input);
-
-        let (crc, length) = Cksum::compute(&mut cursor).unwrap();
-        assert_eq!(length, 13);
-
-        // 同じ入力でバイトスライスから計算した結果と比較
-        let (expected_crc, expected_length) = Cksum::compute_bytes(input);
-        assert_eq!(crc, expected_crc);
-        assert_eq!(length, expected_length);
     }
 
     #[test]
