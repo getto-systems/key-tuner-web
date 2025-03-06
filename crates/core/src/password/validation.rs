@@ -1,4 +1,4 @@
-use crate::password::PasswordMode;
+use crate::password::data::PasswordMode;
 
 /// パスワード生成時のエラー
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
