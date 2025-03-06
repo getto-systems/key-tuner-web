@@ -11,8 +11,8 @@
     "build": "npm run build -w web",
     "preview": "npm run preview -w web",
     "test": "npm run test -w web && cargo test --workspace",
-    "build:wasm": "cd crates/web && wasm-pack build --target web --out-dir ../../web/src/js/wasm/pkg",
-    "clean": "rm -rf web/dist web/src/js/wasm/pkg"
+    "build:wasm": "cd crates/web && wasm-pack build --target web --out-dir ../../web/src/js/wasm_artifacts/pkg",
+    "clean": "rm -rf web/dist web/src/js/wasm_artifacts/pkg"
   },
   "keywords": [
     "password",
