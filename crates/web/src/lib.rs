@@ -11,7 +11,6 @@ use key_tuner_core::{
 };
 
 // WebAssemblyのメモリアロケータとしてwee_allocを使用
-#[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
@@ -160,7 +159,6 @@ impl PasswordConfig {
 #[wasm_bindgen(start)]
 pub fn init() {
     // パニック時にコンソールにエラーを出力
-    #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
 }
 
