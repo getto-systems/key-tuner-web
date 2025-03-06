@@ -9,6 +9,13 @@
             "7u6spuqc980vq98bizs0ymo9q9oaub4u",
             "Cksum",
             "coreutils"
-        ]
+        ],
+        "[typescript]": {
+            "editor.tabSize": 4,
+            "editor.insertSpaces": true,
+            "editor.detectIndentation": false,
+            "typescript.format.semicolons": "insert"
+        },
+        "prettier.semi": true
     }
 }
