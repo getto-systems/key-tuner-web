@@ -60,27 +60,39 @@ function wrapWasmModule(init: () => Promise<WasmModule>): () => WasmModule {
         return {
             generate_password(): void {
                 // Promiseが完了するまで待ってからメソッドを呼び出す
-                wasm.then((module) => module.generate_password());
+                wasm.then((module) => module.generate_password()).catch((error) => {
+                    throw error;
+                });
             },
 
             set_pass_phrase(phrase: string): void {
-                wasm.then((module) => module.set_pass_phrase(phrase));
+                wasm.then((module) => module.set_pass_phrase(phrase)).catch((error) => {
+                    throw error;
+                });
             },
 
             set_service_name(name: string): void {
-                wasm.then((module) => module.set_service_name(name));
+                wasm.then((module) => module.set_service_name(name)).catch((error) => {
+                    throw error;
+                });
             },
 
             set_version(version: string): void {
-                wasm.then((module) => module.set_version(version));
+                wasm.then((module) => module.set_version(version)).catch((error) => {
+                    throw error;
+                });
             },
 
             set_password_mode(mode: string): void {
-                wasm.then((module) => module.set_password_mode(mode));
+                wasm.then((module) => module.set_password_mode(mode)).catch((error) => {
+                    throw error;
+                });
             },
 
             set_password_length(length: string): void {
-                wasm.then((module) => module.set_password_length(length));
+                wasm.then((module) => module.set_password_length(length)).catch((error) => {
+                    throw error;
+                });
             },
         };
     };
