@@ -10,62 +10,73 @@ impl<'a> TryFrom<&'a PasswordSettings> for ValidatedPasswordSettings<'a> {
     type Error = PasswordError;
 
     fn try_from(data: &'a PasswordSettings) -> Result<Self, Self::Error> {
+        let mut settings = Self {
+            pass_phrase: "",
+            service_name: "",
+            version: "",
+            mode: PasswordMode::Ex,
+            length: 0,
+        };
+
         let mut error = PasswordError::default();
         let mut is_error = false;
 
         // パスフレーズの検証
-        let pass_phrase = match validate_pass_phrase(&data.pass_phrase) {
-            Ok(text) => text,
+        match validate_pass_phrase(&data.pass_phrase) {
+            Ok(value) => {
+                settings.pass_phrase = value;
+            }
             Err(err) => {
                 error = error.with_pass_phrase_error(err);
                 is_error = true;
-                ""
             }
-        };
+        }
 
         // サービス名の検証
-        let service_name = match validate_service_name(&data.service_name) {
-            Ok(text) => text,
+        match validate_service_name(&data.service_name) {
+            Ok(value) => {
+                settings.service_name = value;
+            }
             Err(err) => {
                 error = error.with_service_name_error(err);
                 is_error = true;
-                ""
             }
-        };
+        }
 
         // バージョンの検証
-        let version = match validate_version(&data.version) {
-            Ok(text) => text,
+        match validate_version(&data.version) {
+            Ok(value) => {
+                settings.version = value;
+            }
             Err(err) => {
                 error = error.with_version_error(err);
                 is_error = true;
-                ""
             }
-        };
+        }
 
         // モードの検証
-        let mode = match validate_mode(&data.mode) {
-            Ok(Some(mode)) => Some(mode),
-            Ok(None) => None,
+        match validate_mode(&data.mode) {
+            Ok(Some(value)) => {
+                settings.mode = value;
+            }
+            Ok(None) => {}
             Err(err) => {
                 error = error.with_mode_error(err);
                 is_error = true;
-                None
             }
         }
-        .unwrap_or(PasswordMode::Short);
 
         // 長さの検証
-        let length = match validate_length(&data.length) {
-            Ok(Some(length)) => Some(length),
-            Ok(None) => None,
+        match validate_length(&data.length) {
+            Ok(Some(value)) => {
+                settings.length = value;
+            }
+            Ok(None) => {}
             Err(err) => {
                 error = error.with_length_error(err);
                 is_error = true;
-                None
             }
         }
-        .unwrap_or(0);
 
         // エラーがあれば返す
         if is_error {
@@ -73,13 +84,7 @@ impl<'a> TryFrom<&'a PasswordSettings> for ValidatedPasswordSettings<'a> {
         }
 
         // すべてのバリデーションが成功した場合
-        Ok(Self {
-            pass_phrase,
-            service_name,
-            version,
-            mode,
-            length,
-        })
+        Ok(settings)
     }
 }
 
