@@ -4,14 +4,71 @@ use crate::password::{
 };
 
 /// テキスト検証用の構造体
+///
+/// この構造体は、テキスト入力（パスフレーズ、サービス名、バージョンなど）の
+/// 検証を行うためのビルダーパターンを実装しています。
+///
+/// # 使用例
+///
+/// ```
+/// use key_tuner_core::password::validation::TextValidator;
+/// use key_tuner_core::TextError;
+///
+/// // テキストを検証
+/// let text = "example";
+/// let result = TextValidator::new(text)
+///     .max_length(255) // 最大長を指定
+///     .map(|v| v.finish()); // 検証が成功したら文字列を取得
+///
+/// assert_eq!(result.unwrap(), "example");
+///
+/// // 長すぎるテキストの検証
+/// let long_text = "a".repeat(300);
+/// let result = TextValidator::new(&long_text).max_length(255);
+/// assert!(result.is_err());
+/// ```
 pub struct TextValidator<'a>(&'a str);
 
 impl<'a> TextValidator<'a> {
+    /// 新しいTextValidatorインスタンスを作成します
+    ///
+    /// # 引数
+    ///
+    /// * `text` - 検証する文字列
+    ///
+    /// # 戻り値
+    ///
+    /// * `TextValidator` - 新しいバリデータインスタンス
     pub fn new(text: &'a str) -> Self {
         Self(text)
     }
 
-    /// テキストの長さが指定された最大長以下であることを検証
+    /// テキストの長さが指定された最大長以下であることを検証します
+    ///
+    /// # 引数
+    ///
+    /// * `max_length` - 許容される最大文字数
+    ///
+    /// # 戻り値
+    ///
+    /// * `Ok(Self)` - 検証が成功した場合
+    /// * `Err(TextError::TooLong)` - テキストが最大長を超える場合
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use key_tuner_core::password::validation::TextValidator;
+    /// use key_tuner_core::TextError;
+    ///
+    /// // 有効なテキスト
+    /// let text = "example";
+    /// let result = TextValidator::new(text).max_length(10);
+    /// assert!(result.is_ok());
+    ///
+    /// // 長すぎるテキスト
+    /// let result = TextValidator::new("too long text").max_length(5);
+    /// assert!(matches!(result, Err(TextError::TooLong(5))));
+    /// ```
     pub fn max_length(self, max_length: usize) -> Result<Self, TextError> {
         if self.0.len() > max_length {
             return Err(TextError::TooLong(max_length));
@@ -19,17 +76,49 @@ impl<'a> TextValidator<'a> {
         Ok(Self(self.0))
     }
 
-    /// 検証が完了した後、内部の文字列を取り出す
+    /// 検証が完了した後、内部の文字列を取り出します
+    ///
+    /// # 戻り値
+    ///
+    /// * `&'a str` - 検証済みの文字列
     pub fn finish(self) -> &'a str {
         self.0
     }
 }
 
 /// パスワード生成モードを検証するための構造体
+///
+/// この構造体は、パスワード生成モード（"ex", "full", "short"）の
+/// 検証を行うためのビルダーパターンを実装しています。
+///
+/// # 使用例
+///
+/// ```
+/// use key_tuner_core::password::validation::ModeValidator;
+/// use key_tuner_core::ModeError;
+///
+/// // 有効なモード
+/// let result = ModeValidator::new("ex").mode();
+/// assert!(result.is_ok());
+/// let mode = ModeValidator::new("ex").finish();
+/// assert!(mode.is_some());
+///
+/// // 無効なモード
+/// let result = ModeValidator::new("invalid").mode();
+/// assert!(matches!(result, Err(ModeError::InvalidMode)));
+/// ```
 pub struct ModeValidator(Result<PasswordMode, ModeError>);
 
 impl ModeValidator {
-    /// 新しい ModeValidator インスタンスを作成
+    /// 新しいModeValidatorインスタンスを作成します
+    ///
+    /// # 引数
+    ///
+    /// * `mode` - 検証するモード文字列 ("ex", "full", "short")
+    ///
+    /// # 戻り値
+    ///
+    /// * `ModeValidator` - 新しいバリデータインスタンス
     pub fn new(mode: &str) -> Self {
         let result = match mode {
             "ex" => Ok(PasswordMode::Ex),
@@ -40,7 +129,12 @@ impl ModeValidator {
         Self(result)
     }
 
-    /// モードが有効であることを検証
+    /// モードが有効であることを検証します
+    ///
+    /// # 戻り値
+    ///
+    /// * `Ok(Self)` - モードが有効な場合
+    /// * `Err(ModeError::InvalidMode)` - モードが無効な場合
     pub fn mode(self) -> Result<Self, ModeError> {
         match self.0 {
             Ok(_) => Ok(self),
@@ -48,18 +142,53 @@ impl ModeValidator {
         }
     }
 
-    /// 検証が完了した後、内部のパスワードモードを取り出す
-    /// エラーの場合は None を返す
+    /// 検証が完了した後、内部のパスワードモードを取り出します
+    /// エラーの場合は None を返します
+    ///
+    /// # 戻り値
+    ///
+    /// * `Option<PasswordMode>` - 検証済みのパスワードモード（有効な場合）
     pub fn finish(self) -> Option<PasswordMode> {
         self.0.ok()
     }
 }
 
 /// パスワードの長さを検証するための構造体
+///
+/// この構造体は、パスワードの長さの検証を行うためのビルダーパターンを実装しています。
+/// 文字列から数値への変換、最小値・最大値のチェックなどを行います。
+///
+/// # 使用例
+///
+/// ```
+/// use key_tuner_core::password::validation::LengthValidator;
+/// use key_tuner_core::LengthError;
+///
+/// // 有効な長さ
+/// let result = LengthValidator::new("16")
+///     .length()
+///     .and_then(|v| v.min_length(8))
+///     .and_then(|v| v.max_length(64));
+/// assert!(result.is_ok());
+///
+/// // 無効な長さ（短すぎる）
+/// let result = LengthValidator::new("4")
+///     .length()
+///     .and_then(|v| v.min_length(8));
+/// assert!(matches!(result, Err(LengthError::BelowMinimum(8))));
+/// ```
 pub struct LengthValidator(Result<usize, LengthError>);
 
 impl LengthValidator {
-    /// 新しい LengthValidator インスタンスを作成
+    /// 新しいLengthValidatorインスタンスを作成します
+    ///
+    /// # 引数
+    ///
+    /// * `text` - 検証する長さの文字列表現
+    ///
+    /// # 戻り値
+    ///
+    /// * `LengthValidator` - 新しいバリデータインスタンス
     pub fn new(text: &str) -> Self {
         Self(
             text.parse::<usize>()
@@ -67,7 +196,12 @@ impl LengthValidator {
         )
     }
 
-    /// 文字列が有効な長さ（数値）であることを検証
+    /// 文字列が有効な長さ（数値）であることを検証します
+    ///
+    /// # 戻り値
+    ///
+    /// * `Ok(Self)` - 文字列が有効な数値に変換できる場合
+    /// * `Err(LengthError::InvalidLength)` - 文字列が数値に変換できない場合
     pub fn length(self) -> Result<Self, LengthError> {
         match self.0 {
             Ok(_) => Ok(self),
@@ -75,7 +209,17 @@ impl LengthValidator {
         }
     }
 
-    /// 長さが指定された最小値以上であることを検証
+    /// 長さが指定された最小値以上であることを検証します
+    ///
+    /// # 引数
+    ///
+    /// * `min` - 最小許容長
+    ///
+    /// # 戻り値
+    ///
+    /// * `Ok(Self)` - 長さが最小値以上の場合
+    /// * `Err(LengthError::BelowMinimum)` - 長さが最小値未満の場合
+    /// * `Err(LengthError::InvalidLength)` - 長さが無効な場合
     pub fn min_length(self, min: usize) -> Result<Self, LengthError> {
         match self.0 {
             Ok(length) if length < min => Err(LengthError::BelowMinimum(min)),
@@ -84,7 +228,17 @@ impl LengthValidator {
         }
     }
 
-    /// 長さが指定された最大値以下であることを検証
+    /// 長さが指定された最大値以下であることを検証します
+    ///
+    /// # 引数
+    ///
+    /// * `max` - 最大許容長
+    ///
+    /// # 戻り値
+    ///
+    /// * `Ok(Self)` - 長さが最大値以下の場合
+    /// * `Err(LengthError::ExceedsMaximum)` - 長さが最大値を超える場合
+    /// * `Err(LengthError::InvalidLength)` - 長さが無効な場合
     pub fn max_length(self, max: usize) -> Result<Self, LengthError> {
         match self.0 {
             Ok(length) if length > max => Err(LengthError::ExceedsMaximum(max)),
@@ -93,8 +247,12 @@ impl LengthValidator {
         }
     }
 
-    /// 検証が完了した後、内部の数値を返す
-    /// エラーが発生した場合は None を返す
+    /// 検証が完了した後、内部の数値を返します
+    /// エラーが発生した場合は None を返します
+    ///
+    /// # 戻り値
+    ///
+    /// * `Option<usize>` - 検証済みの長さ（有効な場合）
     pub fn finish(self) -> Option<usize> {
         self.0.ok()
     }

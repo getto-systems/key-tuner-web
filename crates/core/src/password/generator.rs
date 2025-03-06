@@ -8,26 +8,99 @@ use crate::password::{
 };
 
 /// パスワード生成器
+///
+/// この構造体は、ユーザーが指定した設定に基づいて安全なパスワードを生成するための
+/// 静的メソッドを提供します。
+///
+/// # 使用例
+///
+/// ```
+/// use key_tuner_core::{PasswordGenerator, PasswordSettings};
+///
+/// // パスワード設定を作成
+/// let settings = PasswordSettings {
+///     pass_phrase: "my passphrase".to_string(),
+///     service_name: "example.com".to_string(),
+///     version: "1".to_string(),
+///     mode: "ex".to_string(),
+///     length: "16".to_string(),
+/// };
+///
+/// // 設定を検証
+/// if let Err(error) = PasswordGenerator::validate_settings(&settings) {
+///     println!("設定エラー: {:?}", error);
+///     return;
+/// }
+///
+/// // パスワードを生成
+/// match PasswordGenerator::generate(&settings) {
+///     Ok(password) => println!("生成されたパスワード: {}", password),
+///     Err(error) => println!("パスワード生成エラー: {:?}", error),
+/// }
+/// ```
 #[derive(Debug)]
 pub struct PasswordGenerator;
 
-/// パスワード生成の設定
+/// パスワード生成の設定（検証済み）
+///
+/// この構造体は、`PasswordSettings`から変換された検証済みの設定を保持します。
+/// 内部的に使用され、すべてのフィールドが適切な型と範囲に変換されています。
 #[derive(Debug, Clone)]
 struct ValidatedPasswordSettings<'a> {
-    /// パスフレーズ
+    /// パスフレーズ（検証済み）
     pass_phrase: &'a str,
-    /// サービス名
+    /// サービス名（検証済み）
     service_name: &'a str,
-    /// バージョン
+    /// バージョン（検証済み）
     version: &'a str,
-    /// 生成モード
+    /// 生成モード（検証済み）
     mode: PasswordMode,
-    /// パスワードの長さ (8-64)
+    /// パスワードの長さ (8-64)（検証済み）
     length: usize,
 }
 
 impl PasswordGenerator {
-    /// パスワード設定を検証
+    /// パスワード設定を検証します
+    ///
+    /// 指定された設定が有効かどうかを検証し、問題がなければ`Ok(())`を返します。
+    /// 無効な設定の場合は、具体的なエラー情報を含む`PasswordError`を返します。
+    ///
+    /// # 引数
+    ///
+    /// * `settings` - 検証するパスワード設定
+    ///
+    /// # 戻り値
+    ///
+    /// * `Ok(())` - 設定が有効な場合
+    /// * `Err(PasswordError)` - 設定が無効な場合、エラーの詳細を含む
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use key_tuner_core::{PasswordGenerator, PasswordSettings};
+    ///
+    /// // 有効な設定
+    /// let valid_settings = PasswordSettings {
+    ///     pass_phrase: "my passphrase".to_string(),
+    ///     service_name: "example.com".to_string(),
+    ///     version: "1".to_string(),
+    ///     mode: "ex".to_string(),
+    ///     length: "16".to_string(),
+    /// };
+    ///
+    /// assert!(PasswordGenerator::validate_settings(&valid_settings).is_ok());
+    ///
+    /// // 無効な設定（長さが短すぎる）
+    /// let invalid_settings = PasswordSettings {
+    ///     pass_phrase: "my passphrase".to_string(),
+    ///     service_name: "example.com".to_string(),
+    ///     version: "1".to_string(),
+    ///     mode: "ex".to_string(),
+    ///     length: "5".to_string(), // 最小値は8
+    /// };
+    ///
+    /// assert!(PasswordGenerator::validate_settings(&invalid_settings).is_err());
+    /// ```
     pub fn validate_settings(settings: &PasswordSettings) -> Result<(), PasswordError> {
         // ValidatedPasswordSettings::try_from を使用して設定を検証
         ValidatedPasswordSettings::try_from(settings)?;
@@ -36,7 +109,56 @@ impl PasswordGenerator {
         Ok(())
     }
 
-    /// パスワードを生成
+    /// パスワードを生成します
+    ///
+    /// 指定された設定に基づいて、決定論的なパスワードを生成します。
+    /// 同じ入力パラメータからは常に同じパスワードが生成されます。
+    ///
+    /// # アルゴリズム
+    ///
+    /// 1. 入力パラメータ（パスフレーズ、サービス名、バージョン）の検証
+    /// 2. 各入力文字列のCRC-32チェックサムの合計を計算
+    /// 3. 合計値を長さ倍にして、シードを作成
+    /// 4. 選択されたモードに応じた文字セットの選択
+    /// 5. シードを使用して、指定された長さのパスワードを生成
+    ///
+    /// # 引数
+    ///
+    /// * `settings` - パスワード生成に使用する設定
+    ///
+    /// # 戻り値
+    ///
+    /// * `Ok(String)` - 生成されたパスワード
+    /// * `Err(PasswordError)` - 設定が無効な場合、エラーの詳細を含む
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use key_tuner_core::{PasswordGenerator, PasswordSettings};
+    ///
+    /// // パスワード設定を作成
+    /// let settings = PasswordSettings {
+    ///     pass_phrase: "example".to_string(),
+    ///     service_name: "my-service".to_string(),
+    ///     version: "0".to_string(),
+    ///     mode: "ex".to_string(),
+    ///     length: "16".to_string(),
+    /// };
+    ///
+    /// // パスワードを生成
+    /// let password = PasswordGenerator::generate(&settings).unwrap();
+    /// assert_eq!(password.len(), 16);
+    ///
+    /// // 同じ設定からは同じパスワードが生成される
+    /// let password2 = PasswordGenerator::generate(&settings).unwrap();
+    /// assert_eq!(password, password2);
+    /// ```
+    ///
+    /// # 注意
+    ///
+    /// この関数は `references/tune.sh` シェルスクリプトの移植であり、
+    /// 元のスクリプトの挙動を正確に保持することが重要です。
+    /// 互換性を維持するために、アルゴリズムの詳細は慎重に実装されています。
     pub fn generate(settings: &PasswordSettings) -> Result<String, PasswordError> {
         // 設定を検証
         let validated_settings = ValidatedPasswordSettings::try_from(settings)?;
@@ -93,7 +215,18 @@ impl PasswordGenerator {
         Ok(result)
     }
 
-    /// 文字列の各文字のCRC-32チェックサムの合計を計算
+    /// 文字列の各文字のCRC-32チェックサムの合計を計算します
+    ///
+    /// 入力文字列の各文字に対してCRC-32チェックサムを計算し、
+    /// その合計を返します。
+    ///
+    /// # 引数
+    ///
+    /// * `input` - チェックサムを計算する文字列
+    ///
+    /// # 戻り値
+    ///
+    /// * `u64` - 計算されたチェックサムの合計
     fn calculate_checksum_sum(input: &str) -> u64 {
         let mut sum = 0;
 
