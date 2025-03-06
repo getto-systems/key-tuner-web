@@ -20,7 +20,7 @@ pub enum PasswordMode {
 /// パスワード設定のデータ転送オブジェクト
 /// 各フィールドが文字列として保持される
 #[derive(Debug, Clone)]
-pub struct PasswordData {
+pub struct PasswordSettings {
     /// パスフレーズ
     pub pass_phrase: String,
     /// サービス名
@@ -33,10 +33,10 @@ pub struct PasswordData {
     pub length: String,
 }
 
-impl TryFrom<PasswordData> for PasswordSettings {
+impl TryFrom<PasswordSettings> for ValidatedPasswordSettings {
     type Error = PasswordError;
 
-    fn try_from(data: PasswordData) -> Result<Self, Self::Error> {
+    fn try_from(data: PasswordSettings) -> Result<Self, Self::Error> {
         let mut error = PasswordError::default();
         let mut is_error = false;
 
@@ -143,17 +143,17 @@ fn validate_length(text: &str) -> Result<Option<usize>, LengthError> {
 
 /// パスワード生成の設定
 #[derive(Debug, Clone)]
-pub struct PasswordSettings {
+pub struct ValidatedPasswordSettings {
     /// パスフレーズ
-    pub pass_phrase: String,
+    pass_phrase: String,
     /// サービス名
-    pub service_name: String,
+    service_name: String,
     /// バージョン
-    pub version: String,
+    version: String,
     /// 生成モード
-    pub mode: PasswordMode,
+    mode: PasswordMode,
     /// パスワードの長さ (8-64)
-    pub length: usize,
+    length: usize,
 }
 
 /// パスワード生成器
@@ -162,7 +162,7 @@ pub struct PasswordGenerator;
 
 impl PasswordGenerator {
     /// パスワードを生成
-    pub fn generate(settings: &PasswordSettings) -> String {
+    pub fn generate(settings: &ValidatedPasswordSettings) -> String {
         // 各入力文字列のCRC-32チェックサムの合計を計算
         let mut sum: u64 = 0;
         sum += Self::calculate_checksum_sum(&settings.pass_phrase);
@@ -236,69 +236,69 @@ mod tests {
     #[test]
     fn test_password_data_try_into() {
         // 有効な設定
-        let data = PasswordData {
+        let data = PasswordSettings {
             pass_phrase: "my passphrase".to_string(),
             service_name: "example.com".to_string(),
             version: "1".to_string(),
             mode: "ex".to_string(),
             length: "12".to_string(),
         };
-        let result: Result<PasswordSettings, _> = data.try_into();
+        let result: Result<ValidatedPasswordSettings, _> = data.try_into();
         assert!(result.is_ok());
 
         // 空のパスフレーズ（空文字列チェックを削除したので有効になる）
-        let data = PasswordData {
+        let data = PasswordSettings {
             pass_phrase: "".to_string(),
             service_name: "example.com".to_string(),
             version: "1".to_string(),
             mode: "ex".to_string(),
             length: "12".to_string(),
         };
-        let result: Result<PasswordSettings, _> = data.try_into();
+        let result: Result<ValidatedPasswordSettings, _> = data.try_into();
         assert!(result.is_ok());
 
         // 空のサービス名（空文字列チェックを削除したので有効になる）
-        let data = PasswordData {
+        let data = PasswordSettings {
             pass_phrase: "my passphrase".to_string(),
             service_name: "".to_string(),
             version: "1".to_string(),
             mode: "ex".to_string(),
             length: "12".to_string(),
         };
-        let result: Result<PasswordSettings, _> = data.try_into();
+        let result: Result<ValidatedPasswordSettings, _> = data.try_into();
         assert!(result.is_ok());
 
         // 空のバージョン（空文字列チェックを削除したので有効になる）
-        let data = PasswordData {
+        let data = PasswordSettings {
             pass_phrase: "my passphrase".to_string(),
             service_name: "example.com".to_string(),
             version: "".to_string(),
             mode: "ex".to_string(),
             length: "12".to_string(),
         };
-        let result: Result<PasswordSettings, _> = data.try_into();
+        let result: Result<ValidatedPasswordSettings, _> = data.try_into();
         assert!(result.is_ok());
 
         // 無効なモード
-        let data = PasswordData {
+        let data = PasswordSettings {
             pass_phrase: "my passphrase".to_string(),
             service_name: "example.com".to_string(),
             version: "1".to_string(),
             mode: "invalid".to_string(),
             length: "12".to_string(),
         };
-        let result: Result<PasswordSettings, _> = data.try_into();
+        let result: Result<ValidatedPasswordSettings, _> = data.try_into();
         assert!(matches!(result, Err(err) if err.mode().is_some()));
 
         // 無効な長さ（短すぎる）
-        let data = PasswordData {
+        let data = PasswordSettings {
             pass_phrase: "my passphrase".to_string(),
             service_name: "example.com".to_string(),
             version: "1".to_string(),
             mode: "ex".to_string(),
             length: "7".to_string(),
         };
-        let result: Result<PasswordSettings, _> = data.try_into();
+        let result: Result<ValidatedPasswordSettings, _> = data.try_into();
         if let Err(err) = result {
             assert!(matches!(err.length(), &Some(LengthError::BelowMinimum(8))));
         } else {
@@ -306,14 +306,14 @@ mod tests {
         }
 
         // 無効な長さ（長すぎる）
-        let data = PasswordData {
+        let data = PasswordSettings {
             pass_phrase: "my passphrase".to_string(),
             service_name: "example.com".to_string(),
             version: "1".to_string(),
             mode: "ex".to_string(),
             length: "65".to_string(),
         };
-        let result: Result<PasswordSettings, _> = data.try_into();
+        let result: Result<ValidatedPasswordSettings, _> = data.try_into();
         if let Err(err) = result {
             assert!(matches!(
                 err.length(),
@@ -326,7 +326,7 @@ mod tests {
 
     #[test]
     fn test_password_length() {
-        let settings = PasswordSettings {
+        let settings = ValidatedPasswordSettings {
             pass_phrase: "my passphrase".to_string(),
             service_name: "example.com".to_string(),
             version: "1".to_string(),
@@ -342,7 +342,7 @@ mod tests {
     #[test]
     fn test_deterministic_password_generation() {
         // 同じ入力パラメータで2回パスワードを生成
-        let settings = PasswordSettings {
+        let settings = ValidatedPasswordSettings {
             pass_phrase: "my passphrase".to_string(),
             service_name: "example.com".to_string(),
             version: "1".to_string(),
@@ -357,7 +357,7 @@ mod tests {
         assert_eq!(password1, password2);
 
         // 異なるサービス名で生成
-        let settings2 = PasswordSettings {
+        let settings2 = ValidatedPasswordSettings {
             pass_phrase: "my passphrase".to_string(),
             service_name: "different.com".to_string(),
             version: "1".to_string(),
@@ -374,7 +374,7 @@ mod tests {
     #[test]
     fn test_specific_password_generation_ex() {
         // 特定のパラメータでのパスワード生成をテスト
-        let settings = PasswordSettings {
+        let settings = ValidatedPasswordSettings {
             pass_phrase: "example".to_string(),
             service_name: "my-service".to_string(),
             version: "0".to_string(),
@@ -390,7 +390,7 @@ mod tests {
     #[test]
     fn test_specific_password_generation_full() {
         // 特定のパラメータでのパスワード生成をテスト
-        let settings = PasswordSettings {
+        let settings = ValidatedPasswordSettings {
             pass_phrase: "example".to_string(),
             service_name: "my-service".to_string(),
             version: "0".to_string(),
@@ -406,7 +406,7 @@ mod tests {
     #[test]
     fn test_specific_password_generation_short() {
         // 特定のパラメータでのパスワード生成をテスト
-        let settings = PasswordSettings {
+        let settings = ValidatedPasswordSettings {
             pass_phrase: "example".to_string(),
             service_name: "my-service".to_string(),
             version: "0".to_string(),
