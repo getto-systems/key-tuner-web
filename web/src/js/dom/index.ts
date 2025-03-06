@@ -1,161 +1,201 @@
 // DOM操作を担当するモジュール
 
 import { WasmModule } from "../wasm/index";
-
-// DOM要素の型定義
-interface DomElements {
-    passwordOutput: HTMLElement | null;
-    generateButton: HTMLButtonElement | null;
-    copyButton: HTMLButtonElement | null;
-    passPhrase: HTMLInputElement | null;
-    serviceName: HTMLInputElement | null;
-    version: HTMLInputElement | null;
-    passwordMode: HTMLSelectElement | null;
-    passwordLength: HTMLInputElement | null;
-    lengthValue: HTMLElement | null;
-    // エラー要素
-    passPhraseError: HTMLElement | null;
-    serviceNameError: HTMLElement | null;
-    versionError: HTMLElement | null;
-    passwordModeError: HTMLElement | null;
-    passwordLengthError: HTMLElement | null;
-    fatalError: HTMLElement | null;
-    fatalErrorMessage: HTMLElement | null;
-}
-
-// エラーハンドラの型定義
-interface ErrorHandlers {
-    setError: (element: HTMLElement | null, message: "" | string) => void;
-    showFatalError: (errorMessage: string) => void;
-}
-
-// イベントハンドラの設定を宣言的に定義するための型
-interface EventHandlerConfig {
-    element: HTMLElement | null;
-    event: string;
-    handler: () => void;
-    condition: boolean;
-}
+import { FatalErrorElements, FatalErrorHandler, createFatalErrorHandler } from "./error";
+import { WasmCall, initWasmCall } from "./wasm";
 
 /**
  * DOM要素のセットアップとイベントハンドラの登録
  * @param {() => WasmModule} initWasm - WASMモジュールを初期化する関数
  */
 export function setupDom(initWasm: () => WasmModule): void {
-    // DOM要素の参照を取得
-    const elements = getDomElements();
+    // DOM要素とエラーハンドラを初期化
+    const domInit = initDomElements();
 
-    // エラーハンドリング関数
-    const errorHandlers = createErrorHandlers(elements);
+    // 初期化に失敗した場合は終了
+    if (domInit === null) {
+        return;
+    }
+
+    const { elements, fatalError } = domInit;
 
     // WASMから呼び出される関数をグローバルスコープに割り当て
-    registerWasmCallbacks(elements, errorHandlers);
+    registerWasmCallbacks(elements);
 
     try {
-        // WASMモジュールを初期化（この部分は移動できない）
-        const wasm = initWasm();
+        // WASMモジュールを初期化して安全な呼び出し関数を作成
+        const wasmCall = initWasmCall<DomElements>(initWasm(), fatalError);
 
         // イベントハンドラを宣言的に設定
-        setupEventHandlers(elements, wasm, errorHandlers);
+        setupEventHandlers(elements, wasmCall);
 
         // 初期設定をWASMに通知
-        initializeWasmSettings(elements, wasm, errorHandlers);
+        sendInitialValueToWasm(elements, wasmCall);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Failed to initialize settings:", error);
-        errorHandlers.showFatalError(`初期化エラー: ${errorMessage}`);
+        fatalError.show(`初期化エラー: ${errorMessage}`);
     }
 }
 
+// DOM要素の型定義
+interface DomElements {
+    passwordOutput: HTMLElement;
+    generateButton: HTMLButtonElement;
+    copyButton: HTMLButtonElement;
+    passPhrase: HTMLInputElement;
+    serviceName: HTMLInputElement;
+    version: HTMLInputElement;
+    passwordMode: HTMLSelectElement;
+    passwordLength: HTMLInputElement;
+    lengthValue: HTMLElement;
+    // エラー要素
+    passPhraseError: HTMLElement;
+    serviceNameError: HTMLElement;
+    versionError: HTMLElement;
+    passwordModeError: HTMLElement;
+    passwordLengthError: HTMLElement;
+}
+
 /**
- * DOM要素の参照を取得する関数
- * @returns {DomElements} DOM要素の参照
+ * DOM要素とエラーハンドラを初期化する関数
+ * @returns DOM要素と致命的エラーハンドラを含むオブジェクト、または初期化失敗時はnull
  */
-function getDomElements(): DomElements {
+function initDomElements(): {
+    elements: DomElements;
+    fatalError: FatalErrorHandler<DomElements>;
+} | null {
+    // 致命的エラー要素の参照を取得
+    const fatalErrorElements = getFatalErrorElements();
+    const fatalError = createFatalErrorHandler<DomElements>(fatalErrorElements, disableInputFields);
+
+    // DOM要素の参照を取得
+    const elements = getDomElements();
+
+    // DOM要素が取得できなかった場合は致命的エラーを表示して終了
+    if (elements === null) {
+        fatalError.show("必要なDOM要素が見つかりませんでした");
+        return null;
+    }
+
+    // 致命的エラーハンドラに要素を設定
+    fatalError.setElements(elements);
+
+    return { elements, fatalError };
+}
+
+/**
+ * 致命的エラー要素の参照を取得する関数
+ * @returns {FatalErrorElements} 致命的エラー要素の参照
+ */
+function getFatalErrorElements(): FatalErrorElements {
     return {
-        passwordOutput: document.getElementById("password-output") as HTMLElement | null,
-        generateButton: document.getElementById("generate-button") as HTMLButtonElement | null,
-        copyButton: document.getElementById("copy-button") as HTMLButtonElement | null,
-        passPhrase: document.getElementById("pass-phrase") as HTMLInputElement | null,
-        serviceName: document.getElementById("service-name") as HTMLInputElement | null,
-        version: document.getElementById("version") as HTMLInputElement | null,
-        passwordMode: document.getElementById("password-mode") as HTMLSelectElement | null,
-        passwordLength: document.getElementById("password-length") as HTMLInputElement | null,
-        lengthValue: document.getElementById("length-value") as HTMLElement | null,
-        // エラー要素
-        passPhraseError: document.getElementById("pass-phrase-error") as HTMLElement | null,
-        serviceNameError: document.getElementById("service-name-error") as HTMLElement | null,
-        versionError: document.getElementById("version-error") as HTMLElement | null,
-        passwordModeError: document.getElementById("password-mode-error") as HTMLElement | null,
-        passwordLengthError: document.getElementById("password-length-error") as HTMLElement | null,
         fatalError: document.getElementById("fatal-error") as HTMLElement | null,
         fatalErrorMessage: document.getElementById("fatal-error-message") as HTMLElement | null,
     };
 }
 
 /**
- * エラーハンドリング関数を作成
- * @param {DomElements} elements - DOM要素の参照
- * @returns {ErrorHandlers} エラーハンドリング関数
+ * DOM要素の参照を取得する関数
+ * @returns {DomElements | null} DOM要素の参照、一つでも要素が見つからない場合はnull
  */
-function createErrorHandlers(elements: DomElements): ErrorHandlers {
-    /**
-     * エラーメッセージを設定する（表示または非表示）
-     * @param {HTMLElement | null} element - エラーメッセージ要素
-     * @param {string | ""} message - 表示するエラーメッセージ（空文字列の場合は非表示）
-     */
-    const setError = (element: HTMLElement | null, message: "" | string): void => {
-        if (!element) return;
+function getDomElements(): DomElements | null {
+    const passwordOutput = document.getElementById("password-output") as HTMLElement | null;
+    const generateButton = document.getElementById("generate-button") as HTMLButtonElement | null;
+    const copyButton = document.getElementById("copy-button") as HTMLButtonElement | null;
+    const passPhrase = document.getElementById("pass-phrase") as HTMLInputElement | null;
+    const serviceName = document.getElementById("service-name") as HTMLInputElement | null;
+    const version = document.getElementById("version") as HTMLInputElement | null;
+    const passwordMode = document.getElementById("password-mode") as HTMLSelectElement | null;
+    const passwordLength = document.getElementById("password-length") as HTMLInputElement | null;
+    const lengthValue = document.getElementById("length-value") as HTMLElement | null;
+    // エラー要素
+    const passPhraseError = document.getElementById("pass-phrase-error") as HTMLElement | null;
+    const serviceNameError = document.getElementById("service-name-error") as HTMLElement | null;
+    const versionError = document.getElementById("version-error") as HTMLElement | null;
+    const passwordModeError = document.getElementById("password-mode-error") as HTMLElement | null;
+    const passwordLengthError = document.getElementById(
+        "password-length-error",
+    ) as HTMLElement | null;
 
-        if (message === "") {
-            element.textContent = "";
-            element.classList.remove("show");
-        } else {
-            element.textContent = message;
-            element.classList.add("show");
-        }
+    // 一つでも要素が見つからない場合はnullを返す
+    if (
+        !passwordOutput ||
+        !generateButton ||
+        !copyButton ||
+        !passPhrase ||
+        !serviceName ||
+        !version ||
+        !passwordMode ||
+        !passwordLength ||
+        !lengthValue ||
+        !passPhraseError ||
+        !serviceNameError ||
+        !versionError ||
+        !passwordModeError ||
+        !passwordLengthError
+    ) {
+        return null;
+    }
+
+    return {
+        passwordOutput,
+        generateButton,
+        copyButton,
+        passPhrase,
+        serviceName,
+        version,
+        passwordMode,
+        passwordLength,
+        lengthValue,
+        // エラー要素
+        passPhraseError,
+        serviceNameError,
+        versionError,
+        passwordModeError,
+        passwordLengthError,
     };
+}
 
-    /**
-     * 復帰不可能なエラーを表示する
-     * @param {string} errorMessage - エラーメッセージ
-     */
-    const showFatalError = (errorMessage: string): void => {
-        // エラーをコンソールに記録
-        console.error("Fatal error:", errorMessage);
-
-        if (!elements.fatalError || !elements.fatalErrorMessage) return;
-
-        // 致命的エラーメッセージを表示
-        elements.fatalErrorMessage.textContent = `致命的エラー: ${errorMessage}`;
-        elements.fatalError.classList.add("show", "fatal");
-
-        // 入力フィールドを無効化
-        if (elements.passPhrase) elements.passPhrase.disabled = true;
-        if (elements.serviceName) elements.serviceName.disabled = true;
-        if (elements.version) elements.version.disabled = true;
-        if (elements.passwordMode) elements.passwordMode.disabled = true;
-        if (elements.passwordLength) elements.passwordLength.disabled = true;
-        if (elements.generateButton) elements.generateButton.disabled = true;
-    };
-
-    return { setError, showFatalError };
+/**
+ * 入力フィールドを無効化する関数
+ * @param {DomElements} elements - DOM要素の参照
+ */
+function disableInputFields(elements: DomElements): void {
+    elements.passPhrase.disabled = true;
+    elements.serviceName.disabled = true;
+    elements.version.disabled = true;
+    elements.passwordMode.disabled = true;
+    elements.passwordLength.disabled = true;
+    elements.generateButton.disabled = true;
 }
 
 /**
  * WASMから呼び出される関数をグローバルスコープに割り当て
  * @param {DomElements} elements - DOM要素の参照
- * @param {ErrorHandlers} errorHandlers - エラーハンドリング関数
  */
-function registerWasmCallbacks(elements: DomElements, errorHandlers: ErrorHandlers): void {
+function registerWasmCallbacks(elements: DomElements): void {
+    /**
+     * エラーメッセージを設定する（表示または非表示）
+     * @param {HTMLElement} element - エラーメッセージ要素
+     * @param {string | ""} message - 表示するエラーメッセージ（空文字列の場合は非表示）
+     */
+    const setError = (element: HTMLElement, message: "" | string | null): void => {
+        if (message === "") {
+            element.textContent = "";
+            element.classList.remove("show");
+        } else {
+            element.textContent = message === null ? "不明なエラー" : message;
+            element.classList.add("show");
+        }
+    };
+
     /**
      * 生成されたパスワードを表示する
      * @param {string} password - 生成されたパスワード
      */
     const draw_generated_password = (password: string): void => {
-        if (elements.passwordOutput) {
-            elements.passwordOutput.textContent = password;
-        }
+        elements.passwordOutput.textContent = password;
     };
 
     /**
@@ -163,7 +203,7 @@ function registerWasmCallbacks(elements: DomElements, errorHandlers: ErrorHandle
      * @param {string | null} errorMessage - エラーメッセージ
      */
     const draw_pass_phrase_error = (errorMessage: string | null): void => {
-        errorHandlers.setError(elements.passPhraseError, errorMessage || "");
+        setError(elements.passPhraseError, errorMessage);
     };
 
     /**
@@ -171,7 +211,7 @@ function registerWasmCallbacks(elements: DomElements, errorHandlers: ErrorHandle
      * @param {string | null} errorMessage - エラーメッセージ
      */
     const draw_service_name_error = (errorMessage: string | null): void => {
-        errorHandlers.setError(elements.serviceNameError, errorMessage || "");
+        setError(elements.serviceNameError, errorMessage);
     };
 
     /**
@@ -179,7 +219,7 @@ function registerWasmCallbacks(elements: DomElements, errorHandlers: ErrorHandle
      * @param {string | null} errorMessage - エラーメッセージ
      */
     const draw_version_error = (errorMessage: string | null): void => {
-        errorHandlers.setError(elements.versionError, errorMessage || "");
+        setError(elements.versionError, errorMessage);
     };
 
     /**
@@ -187,7 +227,7 @@ function registerWasmCallbacks(elements: DomElements, errorHandlers: ErrorHandle
      * @param {string | null} errorMessage - エラーメッセージ
      */
     const draw_password_mode_error = (errorMessage: string | null): void => {
-        errorHandlers.setError(elements.passwordModeError, errorMessage || "");
+        setError(elements.passwordModeError, errorMessage);
     };
 
     /**
@@ -195,7 +235,7 @@ function registerWasmCallbacks(elements: DomElements, errorHandlers: ErrorHandle
      * @param {string | null} errorMessage - エラーメッセージ
      */
     const draw_password_length_error = (errorMessage: string | null): void => {
-        errorHandlers.setError(elements.passwordLengthError, errorMessage || "");
+        setError(elements.passwordLengthError, errorMessage);
     };
 
     // グローバルスコープに割り当て
@@ -208,35 +248,18 @@ function registerWasmCallbacks(elements: DomElements, errorHandlers: ErrorHandle
 }
 
 /**
- * WASM呼び出しを安全に行うユーティリティ関数
- * @param {() => void} fn - 実行する関数
- * @param {string} errorPrefix - エラーメッセージのプレフィックス
- * @param {(message: string) => void} showFatalError - 致命的エラーを表示する関数
- */
-function safeWasmCall(
-    fn: () => void,
-    errorPrefix: string,
-    showFatalError: (message: string) => void,
-): void {
-    try {
-        fn();
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        showFatalError(`${errorPrefix}: ${errorMessage}`);
-    }
-}
-
-/**
  * イベントハンドラを宣言的に設定
  * @param {DomElements} elements - DOM要素の参照
- * @param {WasmModule} wasm - WASMモジュール
- * @param {ErrorHandlers} errorHandlers - エラーハンドリング関数
+ * @param {WasmCall} wasmCall - WASM呼び出し関数
  */
-function setupEventHandlers(
-    elements: DomElements,
-    wasm: WasmModule,
-    errorHandlers: ErrorHandlers,
-): void {
+function setupEventHandlers(elements: DomElements, wasmCall: WasmCall): void {
+    // イベントハンドラの設定項目
+    interface EventHandlerConfig {
+        element: HTMLElement;
+        event: string;
+        handler: () => void;
+    }
+
     // イベントハンドラの設定を宣言的に定義
     const handlers: EventHandlerConfig[] = [
         // パスワード長スライダーの変更イベント
@@ -244,18 +267,11 @@ function setupEventHandlers(
             element: elements.passwordLength,
             event: "input",
             handler: () => {
-                if (!elements.passwordLength || !elements.lengthValue) return;
-
                 const length = elements.passwordLength.value;
                 elements.lengthValue.textContent = length;
 
-                safeWasmCall(
-                    () => wasm.set_password_length(length),
-                    "パスワード長設定エラー",
-                    errorHandlers.showFatalError,
-                );
+                wasmCall((wasm) => wasm.set_password_length(length), "パスワード長設定エラー");
             },
-            condition: !!elements.passwordLength && !!elements.lengthValue,
         },
 
         // パスフレーズの変更イベント
@@ -263,17 +279,10 @@ function setupEventHandlers(
             element: elements.passPhrase,
             event: "input",
             handler: () => {
-                if (!elements.passPhrase) return;
-
                 // 値を一時変数に格納して型チェックを満足させる
                 const value = elements.passPhrase.value;
-                safeWasmCall(
-                    () => wasm.set_pass_phrase(value),
-                    "パスフレーズ設定エラー",
-                    errorHandlers.showFatalError,
-                );
+                wasmCall((wasm) => wasm.set_pass_phrase(value), "パスフレーズ設定エラー");
             },
-            condition: !!elements.passPhrase,
         },
 
         // サービス名の変更イベント
@@ -281,17 +290,10 @@ function setupEventHandlers(
             element: elements.serviceName,
             event: "input",
             handler: () => {
-                if (!elements.serviceName) return;
-
                 // 値を一時変数に格納して型チェックを満足させる
                 const value = elements.serviceName.value;
-                safeWasmCall(
-                    () => wasm.set_service_name(value),
-                    "サービス名設定エラー",
-                    errorHandlers.showFatalError,
-                );
+                wasmCall((wasm) => wasm.set_service_name(value), "サービス名設定エラー");
             },
-            condition: !!elements.serviceName,
         },
 
         // バージョンの変更イベント
@@ -299,17 +301,10 @@ function setupEventHandlers(
             element: elements.version,
             event: "input",
             handler: () => {
-                if (!elements.version) return;
-
                 // 値を一時変数に格納して型チェックを満足させる
                 const value = elements.version.value;
-                safeWasmCall(
-                    () => wasm.set_version(value),
-                    "バージョン設定エラー",
-                    errorHandlers.showFatalError,
-                );
+                wasmCall((wasm) => wasm.set_version(value), "バージョン設定エラー");
             },
-            condition: !!elements.version,
         },
 
         // 生成モードの変更イベント
@@ -317,17 +312,10 @@ function setupEventHandlers(
             element: elements.passwordMode,
             event: "change",
             handler: () => {
-                if (!elements.passwordMode) return;
-
                 // 値を一時変数に格納して型チェックを満足させる
                 const value = elements.passwordMode.value;
-                safeWasmCall(
-                    () => wasm.set_password_mode(value),
-                    "生成モード設定エラー",
-                    errorHandlers.showFatalError,
-                );
+                wasmCall((wasm) => wasm.set_password_mode(value), "生成モード設定エラー");
             },
-            condition: !!elements.passwordMode,
         },
 
         // パスワード生成ボタンのクリックイベント
@@ -335,13 +323,8 @@ function setupEventHandlers(
             element: elements.generateButton,
             event: "click",
             handler: () => {
-                safeWasmCall(
-                    () => wasm.generate_password(),
-                    "パスワード生成エラー",
-                    errorHandlers.showFatalError,
-                );
+                wasmCall((wasm) => wasm.generate_password(), "パスワード生成エラー");
             },
-            condition: !!elements.generateButton,
         },
 
         // コピーボタンのクリックイベント
@@ -349,8 +332,6 @@ function setupEventHandlers(
             element: elements.copyButton,
             event: "click",
             handler: () => {
-                if (!elements.copyButton || !elements.passwordOutput) return;
-
                 const password = elements.passwordOutput.textContent;
 
                 // パスワードがデフォルトメッセージでない場合のみコピー
@@ -363,11 +344,11 @@ function setupEventHandlers(
                         .writeText(password)
                         .then(() => {
                             // コピー成功時の視覚的フィードバック
-                            const originalText = elements.copyButton!.textContent;
-                            elements.copyButton!.textContent = "コピーしました！";
+                            const originalText = elements.copyButton.textContent;
+                            elements.copyButton.textContent = "コピーしました！";
 
                             setTimeout(() => {
-                                elements.copyButton!.textContent = originalText;
+                                elements.copyButton.textContent = originalText;
                             }, 2000);
                         })
                         .catch((err) => {
@@ -375,64 +356,59 @@ function setupEventHandlers(
                         });
                 }
             },
-            condition: !!elements.copyButton && !!elements.passwordOutput,
         },
     ];
 
     // 定義に基づいてイベントハンドラを登録
-    handlers.forEach(({ element, event, handler, condition }) => {
-        if (condition && element) {
-            element.addEventListener(event, handler);
-        }
+    handlers.forEach(({ element, event, handler }) => {
+        element.addEventListener(event, handler);
     });
 }
 
 /**
  * 初期設定をWASMに通知
  * @param {DomElements} elements - DOM要素の参照
- * @param {WasmModule} wasm - WASMモジュール
- * @param {ErrorHandlers} errorHandlers - エラーハンドリング関数
+ * @param {WasmCall} wasmCall - WASM呼び出し関数
  */
-function initializeWasmSettings(
-    elements: DomElements,
-    wasm: WasmModule,
-    errorHandlers: ErrorHandlers,
-): void {
+function sendInitialValueToWasm(elements: DomElements, wasmCall: WasmCall): void {
+    // WASM初期設定項目
+    interface InitialValue {
+        value: string;
+        setter: (wasm: WasmModule, value: string) => void;
+        errorPrefix: string;
+    }
+
     // 初期設定を宣言的に定義
-    const initialSettings = [
+    const initialValues: InitialValue[] = [
         {
-            element: elements.passPhrase,
-            setter: (value: string) => wasm.set_pass_phrase(value),
+            value: elements.passPhrase.value,
+            setter: (wasm: WasmModule, value: string) => wasm.set_pass_phrase(value),
             errorPrefix: "パスフレーズ初期設定エラー",
         },
         {
-            element: elements.serviceName,
-            setter: (value: string) => wasm.set_service_name(value),
+            value: elements.serviceName.value,
+            setter: (wasm: WasmModule, value: string) => wasm.set_service_name(value),
             errorPrefix: "サービス名初期設定エラー",
         },
         {
-            element: elements.version,
-            setter: (value: string) => wasm.set_version(value),
+            value: elements.version.value,
+            setter: (wasm: WasmModule, value: string) => wasm.set_version(value),
             errorPrefix: "バージョン初期設定エラー",
         },
         {
-            element: elements.passwordMode,
-            setter: (value: string) => wasm.set_password_mode(value),
+            value: elements.passwordMode.value,
+            setter: (wasm: WasmModule, value: string) => wasm.set_password_mode(value),
             errorPrefix: "生成モード初期設定エラー",
         },
         {
-            element: elements.passwordLength,
-            setter: (value: string) => wasm.set_password_length(value),
+            value: elements.passwordLength.value,
+            setter: (wasm: WasmModule, value: string) => wasm.set_password_length(value),
             errorPrefix: "パスワード長初期設定エラー",
         },
     ];
 
     // 定義に基づいて初期設定を適用
-    initialSettings.forEach(({ element, setter, errorPrefix }) => {
-        if (element && "value" in element && element.value !== undefined) {
-            // 値を一時変数に格納して型チェックを満足させる
-            const value = element.value;
-            safeWasmCall(() => setter(value), errorPrefix, errorHandlers.showFatalError);
-        }
+    initialValues.forEach(({ value, setter, errorPrefix }) => {
+        wasmCall((wasm) => setter(wasm, value), errorPrefix);
     });
 }
