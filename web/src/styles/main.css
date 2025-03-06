@@ -72,6 +72,44 @@ header h1 {
   margin-bottom: 0;
 }
 
+.error-message {
+  color: var(--error-color);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  display: none;
+}
+
+.error-message.show {
+  display: block;
+}
+
+/* 復帰不可能なエラー表示 */
+.fatal-error {
+  background-color: var(--error-color);
+  color: white;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  display: none;
+}
+
+.fatal-error.show {
+  display: block;
+}
+
+.fatal-error-content {
+  text-align: center;
+}
+
+.fatal-error h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.fatal-error p {
+  margin-bottom: 0.5rem;
+}
+
 label {
   display: block;
   margin-bottom: 0.5rem;

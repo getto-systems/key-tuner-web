@@ -6,4 +6,5 @@ mod crypto;
 mod password;
 
 pub use password::data::PasswordSettings;
+pub use password::error::{LengthError, ModeError, PasswordError, TextError};
 pub use password::generator::PasswordGenerator;
