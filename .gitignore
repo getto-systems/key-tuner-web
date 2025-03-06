@@ -14,7 +14,7 @@ yarn-error.log
 /web/.vite/
 
 # WASM
-/web/src/js/wasm/pkg/
+/web/src/js/wasm_artifacts/pkg/
 
 # Editor
 .vscode/*
