@@ -1,6 +1,6 @@
 // WASMモジュールの初期化
-import { initWasm } from './wasm/index.js';
-import { setupDom } from './dom/index.js';
+import { initWasm } from './wasm/index.ts';
+import { setupDom } from './dom/index.ts';
 
 // アプリケーションの初期化
 async function initApp() {
