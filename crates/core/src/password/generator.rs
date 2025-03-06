@@ -27,6 +27,15 @@ struct ValidatedPasswordSettings<'a> {
 }
 
 impl PasswordGenerator {
+    /// パスワード設定を検証
+    pub fn validate_settings(settings: &PasswordSettings) -> Result<(), PasswordError> {
+        // ValidatedPasswordSettings::try_from を使用して設定を検証
+        ValidatedPasswordSettings::try_from(settings)?;
+
+        // 検証に成功した場合は Ok(()) を返す
+        Ok(())
+    }
+
     /// パスワードを生成
     pub fn generate(settings: &PasswordSettings) -> Result<String, PasswordError> {
         // 設定を検証
@@ -101,6 +110,21 @@ impl PasswordGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_validate_settings() {
+        // 有効な設定
+        let valid_settings = PasswordSettings {
+            pass_phrase: "my passphrase".to_string(),
+            service_name: "example.com".to_string(),
+            version: "1".to_string(),
+            mode: "ex".to_string(),
+            length: "16".to_string(),
+        };
+
+        // 検証が成功することを確認
+        assert!(PasswordGenerator::validate_settings(&valid_settings).is_ok());
+    }
 
     #[test]
     fn test_password_length() {

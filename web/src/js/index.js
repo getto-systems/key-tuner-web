@@ -10,10 +10,17 @@ async function initApp() {
     
     // DOMイベントのセットアップ
     setupDom(wasm);
-    
-    console.log('Key Tuner application initialized successfully');
   } catch (error) {
     console.error('Failed to initialize the application:', error);
+    
+    // 復帰不可能なエラーを表示
+    const fatalError = document.getElementById('fatal-error');
+    const fatalErrorMessage = document.getElementById('fatal-error-message');
+    
+    if (fatalError && fatalErrorMessage) {
+      fatalErrorMessage.textContent = `アプリケーションの初期化中にエラーが発生しました: ${error.message || error}`;
+      fatalError.classList.add('show');
+    }
   }
 }
 

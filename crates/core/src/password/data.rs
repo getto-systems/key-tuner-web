@@ -1,6 +1,6 @@
 /// パスワード設定のデータ転送オブジェクト
 /// 各フィールドが文字列として保持される
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct PasswordSettings {
     /// パスフレーズ
     pub pass_phrase: String,

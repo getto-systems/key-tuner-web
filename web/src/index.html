@@ -14,6 +14,15 @@
       <p>安全なパスワードを生成するツール</p>
     </header>
     
+    <!-- 復帰不可能なエラーを表示するための要素 -->
+    <div id="fatal-error" class="fatal-error">
+      <div class="fatal-error-content">
+        <h2>エラーが発生しました</h2>
+        <p id="fatal-error-message">アプリケーションの初期化中にエラーが発生しました。</p>
+        <p>ページを再読み込みしてみてください。問題が解決しない場合は、管理者にお問い合わせください。</p>
+      </div>
+    </div>
+    
     <main>
       <div class="password-container">
         <div id="password-output" class="password-output">パスワードがここに表示されます</div>
@@ -24,16 +33,19 @@
         <div class="control-group">
           <label for="pass-phrase">パスフレーズ</label>
           <input type="text" id="pass-phrase" placeholder="あなたの秘密のフレーズを入力してください" value="default passphrase">
+          <div id="pass-phrase-error" class="error-message"></div>
         </div>
         
         <div class="control-group">
           <label for="service-name">サービス名</label>
           <input type="text" id="service-name" placeholder="パスワードを使用するサービス名を入力してください" value="default service">
+          <div id="service-name-error" class="error-message"></div>
         </div>
         
         <div class="control-group">
           <label for="version">バージョン</label>
           <input type="text" id="version" placeholder="バージョン番号を入力してください" value="1">
+          <div id="version-error" class="error-message"></div>
         </div>
         
         <div class="control-group">
@@ -43,11 +55,13 @@
             <option value="full">Full: 大文字小文字数字を含む</option>
             <option value="short">Short: 小文字数字のみ</option>
           </select>
+          <div id="password-mode-error" class="error-message"></div>
         </div>
         
         <div class="control-group">
           <label for="password-length">長さ: <span id="length-value">12</span></label>
           <input type="range" id="password-length" min="8" max="64" value="12">
+          <div id="password-length-error" class="error-message"></div>
         </div>
       </div>
       
