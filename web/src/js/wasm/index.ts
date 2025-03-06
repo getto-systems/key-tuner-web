@@ -16,10 +16,18 @@ export interface WasmModule {
 }
 
 /**
+ * WASMモジュールを初期化して使用可能な状態にする
+ * @returns WASMモジュールのインターフェースを返す関数
+ */
+export function initWasm(): () => WasmModule {
+    return wrapWasmModule(initWasmModule);
+}
+
+/**
  * WASMモジュールを初期化する
  * @returns 初期化されたWASMモジュールのインターフェース
  */
-export async function initWasm(): Promise<WasmModule> {
+async function initWasmModule(): Promise<WasmModule> {
     try {
         // WASMモジュールをインポートして初期化
         const wasmModule = await import("./pkg/key_tuner_web.js");
@@ -28,4 +36,52 @@ export async function initWasm(): Promise<WasmModule> {
         console.error("Failed to initialize WASM module:", error);
         throw error;
     }
+}
+
+/**
+ * WASMモジュールのラッパーを返す関数を返す
+ * @param init WASMモジュールを初期化する関数
+ * @returns WASMモジュールのラッパーを返す関数
+ */
+function wrapWasmModule(init: () => Promise<WasmModule>): () => WasmModule {
+    let wasmPromise: Promise<WasmModule> | undefined;
+
+    // ラッパー初期化関数
+    return function initWrapper(): WasmModule {
+        // 初期化関数が呼ばれていない場合は呼び出す
+        if (!wasmPromise) {
+            wasmPromise = init();
+        }
+
+        // 現在のPromiseを安全に参照するための変数
+        const wasm = wasmPromise;
+
+        // WASMモジュールのラッパーを返す
+        return {
+            generate_password(): void {
+                // Promiseが完了するまで待ってからメソッドを呼び出す
+                wasm.then((module) => module.generate_password());
+            },
+
+            set_pass_phrase(phrase: string): void {
+                wasm.then((module) => module.set_pass_phrase(phrase));
+            },
+
+            set_service_name(name: string): void {
+                wasm.then((module) => module.set_service_name(name));
+            },
+
+            set_version(version: string): void {
+                wasm.then((module) => module.set_version(version));
+            },
+
+            set_password_mode(mode: string): void {
+                wasm.then((module) => module.set_password_mode(mode));
+            },
+
+            set_password_length(length: string): void {
+                wasm.then((module) => module.set_password_length(length));
+            },
+        };
+    };
 }

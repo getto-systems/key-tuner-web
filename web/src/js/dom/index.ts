@@ -4,9 +4,9 @@ import { WasmModule } from "../wasm/index";
 
 /**
  * DOM要素のセットアップとイベントハンドラの登録
- * @param {WasmModule} wasm - WASMモジュールのインスタンス
+ * @param {() => Promise<WasmModule>} initWasm - WASMモジュールを初期化する関数
  */
-export function setupDom(wasm: WasmModule): void {
+export function setupDom(initWasm: () => WasmModule): void {
     // DOM要素の参照を取得
     const passwordOutput = document.getElementById("password-output") as HTMLElement | null;
     const generateButton = document.getElementById("generate-button") as HTMLButtonElement | null;
@@ -55,6 +55,9 @@ export function setupDom(wasm: WasmModule): void {
      * @param {string} errorMessage - エラーメッセージ
      */
     function showFatalError(errorMessage: string): void {
+        // エラーをコンソールに記録
+        console.error("Fatal error:", errorMessage);
+
         if (!fatalError || !fatalErrorMessage) return;
 
         // 致命的エラーメッセージを表示
@@ -68,9 +71,6 @@ export function setupDom(wasm: WasmModule): void {
         if (passwordMode) passwordMode.disabled = true;
         if (passwordLength) passwordLength.disabled = true;
         if (generateButton) generateButton.disabled = true;
-
-        // エラーをコンソールに記録
-        console.error("Fatal error:", errorMessage);
     }
 
     /**
@@ -151,114 +151,117 @@ export function setupDom(wasm: WasmModule): void {
     (window as any).draw_password_mode_error = draw_password_mode_error;
     (window as any).draw_password_length_error = draw_password_length_error;
 
-    // パスワード長スライダーの変更イベント
-    if (passwordLength && lengthValue) {
-        passwordLength.addEventListener("input", () => {
-            const length = passwordLength.value;
-            lengthValue.textContent = length;
-
-            // WASMに設定を通知
-            try {
-                wasm.set_password_length(length);
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                showFatalError(`パスワード長設定エラー: ${errorMessage}`);
-            }
-        });
-    }
-
-    // パスフレーズの変更イベント
-    if (passPhrase) {
-        passPhrase.addEventListener("input", () => {
-            try {
-                wasm.set_pass_phrase(passPhrase.value);
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                showFatalError(`パスフレーズ設定エラー: ${errorMessage}`);
-            }
-        });
-    }
-
-    // サービス名の変更イベント
-    if (serviceName) {
-        serviceName.addEventListener("input", () => {
-            try {
-                wasm.set_service_name(serviceName.value);
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                showFatalError(`サービス名設定エラー: ${errorMessage}`);
-            }
-        });
-    }
-
-    // バージョンの変更イベント
-    if (version) {
-        version.addEventListener("input", () => {
-            try {
-                wasm.set_version(version.value);
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                showFatalError(`バージョン設定エラー: ${errorMessage}`);
-            }
-        });
-    }
-
-    // 生成モードの変更イベント
-    if (passwordMode) {
-        passwordMode.addEventListener("change", () => {
-            try {
-                wasm.set_password_mode(passwordMode.value);
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                showFatalError(`生成モード設定エラー: ${errorMessage}`);
-            }
-        });
-    }
-
-    // パスワード生成ボタンのクリックイベント
-    if (generateButton) {
-        generateButton.addEventListener("click", () => {
-            try {
-                // WASMからパスワードを生成
-                wasm.generate_password();
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                showFatalError(`パスワード生成エラー: ${errorMessage}`);
-            }
-        });
-    }
-
-    // コピーボタンのクリックイベント
-    if (copyButton && passwordOutput) {
-        copyButton.addEventListener("click", () => {
-            const password = passwordOutput.textContent;
-
-            // パスワードがデフォルトメッセージでない場合のみコピー
-            if (
-                password &&
-                password !== "パスワードがここに表示されます" &&
-                password !== "エラーが発生しました"
-            ) {
-                navigator.clipboard
-                    .writeText(password)
-                    .then(() => {
-                        // コピー成功時の視覚的フィードバック
-                        const originalText = copyButton.textContent;
-                        copyButton.textContent = "コピーしました！";
-
-                        setTimeout(() => {
-                            copyButton.textContent = originalText;
-                        }, 2000);
-                    })
-                    .catch((err) => {
-                        console.error("Failed to copy password:", err);
-                    });
-            }
-        });
-    }
-
-    // 初期設定をWASMに通知
     try {
+        // WASMモジュールを初期化
+        const wasm = initWasm();
+
+        // パスワード長スライダーの変更イベント
+        if (passwordLength && lengthValue) {
+            passwordLength.addEventListener("input", () => {
+                const length = passwordLength.value;
+                lengthValue.textContent = length;
+
+                // WASMに設定を通知
+                try {
+                    wasm.set_password_length(length);
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    showFatalError(`パスワード長設定エラー: ${errorMessage}`);
+                }
+            });
+        }
+
+        // パスフレーズの変更イベント
+        if (passPhrase) {
+            passPhrase.addEventListener("input", () => {
+                try {
+                    wasm.set_pass_phrase(passPhrase.value);
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    showFatalError(`パスフレーズ設定エラー: ${errorMessage}`);
+                }
+            });
+        }
+
+        // サービス名の変更イベント
+        if (serviceName) {
+            serviceName.addEventListener("input", () => {
+                try {
+                    wasm.set_service_name(serviceName.value);
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    showFatalError(`サービス名設定エラー: ${errorMessage}`);
+                }
+            });
+        }
+
+        // バージョンの変更イベント
+        if (version) {
+            version.addEventListener("input", () => {
+                try {
+                    wasm.set_version(version.value);
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    showFatalError(`バージョン設定エラー: ${errorMessage}`);
+                }
+            });
+        }
+
+        // 生成モードの変更イベント
+        if (passwordMode) {
+            passwordMode.addEventListener("change", () => {
+                try {
+                    wasm.set_password_mode(passwordMode.value);
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    showFatalError(`生成モード設定エラー: ${errorMessage}`);
+                }
+            });
+        }
+
+        // パスワード生成ボタンのクリックイベント
+        if (generateButton) {
+            generateButton.addEventListener("click", () => {
+                try {
+                    // WASMからパスワードを生成
+                    wasm.generate_password();
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    showFatalError(`パスワード生成エラー: ${errorMessage}`);
+                }
+            });
+        }
+
+        // コピーボタンのクリックイベント
+        if (copyButton && passwordOutput) {
+            copyButton.addEventListener("click", () => {
+                const password = passwordOutput.textContent;
+
+                // パスワードがデフォルトメッセージでない場合のみコピー
+                if (
+                    password &&
+                    password !== "パスワードがここに表示されます" &&
+                    password !== "エラーが発生しました"
+                ) {
+                    navigator.clipboard
+                        .writeText(password)
+                        .then(() => {
+                            // コピー成功時の視覚的フィードバック
+                            const originalText = copyButton.textContent;
+                            copyButton.textContent = "コピーしました！";
+
+                            setTimeout(() => {
+                                copyButton.textContent = originalText;
+                            }, 2000);
+                        })
+                        .catch((err) => {
+                            console.error("Failed to copy password:", err);
+                        });
+                }
+            });
+        }
+
+        // 初期設定をWASMに通知
         if (passPhrase) wasm.set_pass_phrase(passPhrase.value);
         if (serviceName) wasm.set_service_name(serviceName.value);
         if (version) wasm.set_version(version.value);
