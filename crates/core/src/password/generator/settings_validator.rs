@@ -1,9 +1,7 @@
 use crate::password::{
     data::{PasswordMode, PasswordSettings},
-    validation::{
-        LengthError, LengthValidator, ModeError, ModeValidator, PasswordError, TextError,
-        TextValidator,
-    },
+    error::{LengthError, ModeError, PasswordError, TextError},
+    validation::{LengthValidator, ModeValidator, TextValidator},
 };
 
 use super::ValidatedPasswordSettings;

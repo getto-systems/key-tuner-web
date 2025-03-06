@@ -2,7 +2,7 @@
 //!
 //! パスワード生成のコアロジックを提供するクレート
 
-mod cksum;
+mod crypto;
 mod password;
 
 pub use password::data::PasswordSettings;
