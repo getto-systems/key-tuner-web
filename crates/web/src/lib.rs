@@ -6,7 +6,7 @@ use wasm_bindgen::prelude::{wasm_bindgen, JsValue};
 
 use std::cell::RefCell;
 
-use key_tuner_core::password::{PasswordData, PasswordGenerator, PasswordSettings};
+use key_tuner_core::password::{PasswordSettings, PasswordGenerator, ValidatedPasswordSettings};
 
 // WebAssemblyのメモリアロケータとしてwee_allocを使用
 #[cfg(feature = "wee_alloc")]
@@ -21,13 +21,13 @@ thread_local! {
 // フロントエンド用のパスワード設定
 #[derive(Debug, Clone)]
 struct PasswordConfig {
-    data: PasswordData,
+    data: PasswordSettings,
 }
 
 impl Default for PasswordConfig {
     fn default() -> Self {
         Self {
-            data: PasswordData {
+            data: PasswordSettings {
                 pass_phrase: "default passphrase".to_string(),
                 service_name: "default service".to_string(),
                 version: "1".to_string(),
@@ -39,9 +39,9 @@ impl Default for PasswordConfig {
 }
 
 impl PasswordConfig {
-    // PasswordSettingsに変換
-    fn to_settings(&self) -> Result<PasswordSettings, String> {
-        PasswordSettings::try_from(self.data.clone()).map_err(|e| format!("{:?}", e))
+    // ValidatedPasswordSettingsに変換
+    fn to_settings(&self) -> Result<ValidatedPasswordSettings, String> {
+        ValidatedPasswordSettings::try_from(self.data.clone()).map_err(|e| format!("{:?}", e))
     }
 }
 
