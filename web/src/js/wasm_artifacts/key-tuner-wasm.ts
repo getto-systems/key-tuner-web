@@ -20,12 +20,7 @@ export interface KeyTunerWasm {
  * @returns 初期化されたWASMモジュールのインターフェース
  */
 export async function initKeyTunerWasm(): Promise<KeyTunerWasm> {
-    try {
-        // WASMモジュールをインポートして初期化
-        const wasmModule = await import("./pkg/key_tuner_web.js");
-        return wasmModule.default() as Promise<KeyTunerWasm>;
-    } catch (error) {
-        console.error("Failed to initialize WASM module:", error);
-        throw error;
-    }
+    // WASMモジュールをインポートして初期化
+    const wasmModule = await import("./pkg/key_tuner_web.js");
+    return wasmModule.default() as Promise<KeyTunerWasm>;
 }

@@ -1,6 +1,6 @@
 // DOM要素の取得を担当するモジュール
 
-import { FatalErrorElements, FatalErrorHandler, createFatalErrorHandler } from "../../dom/error";
+import { FatalErrorElements, FatalErrorHandler, createFatalErrorHandler } from "../../common/fatal_error";
 
 // DOM要素の型定義
 export interface DomElements {

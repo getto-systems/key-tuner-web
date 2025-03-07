@@ -20,7 +20,7 @@ thread_local! {
 }
 
 // JavaScriptの関数を呼び出すための外部関数宣言
-#[wasm_bindgen(js_namespace = window)]
+#[wasm_bindgen(js_namespace = __KEY_TUNER_WASM_BRIDGE__)]
 extern "C" {
     // 生成されたパスワードを表示する関数
     fn draw_generated_password(password: String);
@@ -175,7 +175,7 @@ pub fn generate_password() {
 
 #[wasm_bindgen]
 pub fn set_pass_phrase(phrase: JsValue) {
-    let phrase: String = phrase.as_string().unwrap_or_default();
+    let phrase = phrase.as_string().unwrap_or_default();
     PASSWORD_CONFIG.with(|config| {
         let mut config_ref = config.borrow_mut();
         config_ref.settings.pass_phrase = phrase;
@@ -187,7 +187,7 @@ pub fn set_pass_phrase(phrase: JsValue) {
 
 #[wasm_bindgen]
 pub fn set_service_name(name: JsValue) {
-    let name: String = name.as_string().unwrap_or_default();
+    let name = name.as_string().unwrap_or_default();
     PASSWORD_CONFIG.with(|config| {
         let mut config_ref = config.borrow_mut();
         config_ref.settings.service_name = name;
@@ -199,7 +199,7 @@ pub fn set_service_name(name: JsValue) {
 
 #[wasm_bindgen]
 pub fn set_version(version: JsValue) {
-    let version: String = version.as_string().unwrap_or_default();
+    let version = version.as_string().unwrap_or_default();
     PASSWORD_CONFIG.with(|config| {
         let mut config_ref = config.borrow_mut();
         config_ref.settings.version = version;
@@ -211,7 +211,7 @@ pub fn set_version(version: JsValue) {
 
 #[wasm_bindgen]
 pub fn set_password_mode(mode: JsValue) {
-    let mode: String = mode.as_string().unwrap_or("invalid mode".into());
+    let mode = mode.as_string().unwrap_or_default();
     PASSWORD_CONFIG.with(|config| {
         let mut config_ref = config.borrow_mut();
         config_ref.settings.mode = mode;
@@ -223,7 +223,7 @@ pub fn set_password_mode(mode: JsValue) {
 
 #[wasm_bindgen]
 pub fn set_password_length(length: JsValue) {
-    let length: String = length.as_string().unwrap_or_default();
+    let length = length.as_string().unwrap_or_default();
     PASSWORD_CONFIG.with(|config| {
         let mut config_ref = config.borrow_mut();
         config_ref.settings.length = length;
