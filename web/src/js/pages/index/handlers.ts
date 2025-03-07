@@ -71,13 +71,17 @@ export function registerWasmCallbacks(elements: DomElements): void {
         setError(elements.passwordLengthError, errorMessage);
     };
 
-    // グローバルスコープに割り当て
-    (window as any).draw_generated_password = draw_generated_password;
-    (window as any).draw_pass_phrase_error = draw_pass_phrase_error;
-    (window as any).draw_service_name_error = draw_service_name_error;
-    (window as any).draw_version_error = draw_version_error;
-    (window as any).draw_password_mode_error = draw_password_mode_error;
-    (window as any).draw_password_length_error = draw_password_length_error;
+    // 名前空間に割り当て
+    // 現状、この方法以外では wasm 側に js のメソッドを公開する方法がない
+    // 名前の衝突が起こりにくいような名前で登録を行う
+    (window as any).__KEY_TUNER_WASM_BRIDGE__ = (window as any).__KEY_TUNER_WASM_BRIDGE__ || {
+        draw_generated_password,
+        draw_pass_phrase_error,
+        draw_service_name_error,
+        draw_version_error,
+        draw_password_mode_error,
+        draw_password_length_error,
+    };
 }
 
 /**
@@ -112,9 +116,7 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
             element: elements.passPhrase,
             event: "input",
             handler: () => {
-                // 値を一時変数に格納して型チェックを満足させる
-                const value = elements.passPhrase.value;
-                wasm.set_pass_phrase(value);
+                wasm.set_pass_phrase(elements.passPhrase.value);
             },
         },
 
@@ -123,9 +125,7 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
             element: elements.serviceName,
             event: "input",
             handler: () => {
-                // 値を一時変数に格納して型チェックを満足させる
-                const value = elements.serviceName.value;
-                wasm.set_service_name(value);
+                wasm.set_service_name(elements.serviceName.value);
             },
         },
 
@@ -134,9 +134,7 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
             element: elements.version,
             event: "input",
             handler: () => {
-                // 値を一時変数に格納して型チェックを満足させる
-                const value = elements.version.value;
-                wasm.set_version(value);
+                wasm.set_version(elements.version.value);
             },
         },
 
@@ -145,9 +143,7 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
             element: elements.passwordMode,
             event: "change",
             handler: () => {
-                // 値を一時変数に格納して型チェックを満足させる
-                const value = elements.passwordMode.value;
-                wasm.set_password_mode(value);
+                wasm.set_password_mode(elements.passwordMode.value);
             },
         },
 
