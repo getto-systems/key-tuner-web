@@ -4,7 +4,7 @@ use crate::crypto::cksum::Cksum;
 
 use crate::password::{
     data::{PasswordMode, PasswordSettings},
-    error::PasswordError,
+    error::{GenerationError, PasswordError},
 };
 
 /// パスワード生成器
@@ -162,7 +162,22 @@ impl PasswordGenerator {
     pub fn generate(settings: &PasswordSettings) -> Result<String, PasswordError> {
         // 設定を検証
         let validated_settings = ValidatedPasswordSettings::try_from(settings)?;
-
+        
+        // 検証済み設定でパスワードを生成
+        Self::generate_with_validated_settings(validated_settings)
+    }
+    
+    /// 検証済み設定を使用してパスワードを生成します（内部実装）
+    ///
+    /// # 引数
+    ///
+    /// * `validated_settings` - 検証済みのパスワード設定
+    ///
+    /// # 戻り値
+    ///
+    /// * `Ok(String)` - 生成されたパスワード
+    /// * `Err(PasswordError)` - 生成プロセスでエラーが発生した場合
+    fn generate_with_validated_settings(validated_settings: ValidatedPasswordSettings) -> Result<String, PasswordError> {
         // 各入力文字列のCRC-32チェックサムの合計を計算
         let mut sum: u64 = 0;
         sum += Self::calculate_checksum_sum(&validated_settings.pass_phrase);
@@ -187,6 +202,9 @@ impl PasswordGenerator {
         let mut result = String::with_capacity(validated_settings.length);
         let mut last_char = None;
         let mut i = 0;
+        let mut repeat_count = 0;
+        // 同じ文字が連続して現れる最大試行回数
+        const MAX_REPEAT_ATTEMPTS: usize = 100;
 
         while result.len() < validated_settings.length {
             // シードから3桁の数値を取得（シェルスクリプトと同じ動作にする）
@@ -207,6 +225,20 @@ impl PasswordGenerator {
             if last_char != Some(current_char) {
                 result.push(current_char);
                 last_char = Some(current_char);
+                repeat_count = 0;
+            } else {
+                // 同じ文字が連続して現れた場合、カウントを増やす
+                repeat_count += 1;
+                
+                // 一定回数以上同じ文字が連続して現れた場合はエラーを返す
+                if repeat_count >= MAX_REPEAT_ATTEMPTS {
+                    return Err(PasswordError::default().with_generation_error(
+                        GenerationError::CharacterRepetitionLimit(
+                            current_char,
+                            MAX_REPEAT_ATTEMPTS,
+                        ),
+                    ));
+                }
             }
 
             i += 1;
@@ -352,5 +384,39 @@ mod tests {
         let password = PasswordGenerator::generate(&settings).unwrap();
 
         assert_eq!(password, "7u6spuqc980vq98bizs0ymo9q9oaub4u");
+    }
+
+    #[test]
+    fn test_character_repetition_limit() {
+        // 空の入力パラメータを使用して、同じ文字が連続して現れるケースをテスト
+        // 空の文字列のチェックサムは同じになるため、同じ文字が連続して現れやすくなる
+        
+        // 検証をスキップするために、直接 ValidatedPasswordSettings を作成
+        let validated_settings = ValidatedPasswordSettings {
+            pass_phrase: "",
+            service_name: "",
+            version: "",
+            mode: PasswordMode::Ex,
+            length: 16, // 適当な長さ
+        };
+        
+        // generate_with_validated_settings を使用してパスワード生成を試みる
+        let result = PasswordGenerator::generate_with_validated_settings(validated_settings);
+        
+        // エラーが返されることを確認
+        assert!(result.is_err());
+        
+        // 返されたエラーが CharacterRepetitionLimit であることを確認
+        if let Err(err) = result {
+            if let Some(generation_error) = err.generation() {
+                match generation_error {
+                    GenerationError::CharacterRepetitionLimit(_, attempts) => {
+                        assert_eq!(*attempts, 100); // MAX_REPEAT_ATTEMPTS の値
+                    }
+                }
+            } else {
+                panic!("Expected GenerationError::CharacterRepetitionLimit");
+            }
+        }
     }
 }
