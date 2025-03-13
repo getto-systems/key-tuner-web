@@ -37,6 +37,8 @@ pub struct PasswordError {
     mode: Option<ModeError>,
     /// パスワードの長さに関するエラー
     length: Option<LengthError>,
+    /// パスワード生成プロセスに関するエラー
+    generation: Option<GenerationError>,
 }
 
 /// テキスト入力に関するエラー
@@ -89,6 +91,20 @@ pub enum LengthError {
     ExceedsMaximum(usize),
 }
 
+/// パスワード生成プロセスに関するエラー
+///
+/// パスワード生成時に発生するエラーを表します。
+///
+/// # バリアント
+///
+/// * `CharacterRepetitionLimit(char, usize)` - 同じ文字が指定された回数以上現れた場合。
+///   最初のパラメータは繰り返された文字、2番目のパラメータは試行回数を示します。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum GenerationError {
+    /// 同じ文字が多すぎる（繰り返された文字、試行回数）
+    CharacterRepetitionLimit(char, usize),
+}
+
 impl PasswordError {
     /// パスフレーズのエラーを取得します
     ///
@@ -133,6 +149,15 @@ impl PasswordError {
     /// * `&Option<LengthError>` - 長さに関するエラー（存在する場合）
     pub fn length(&self) -> &Option<LengthError> {
         &self.length
+    }
+
+    /// 生成プロセスのエラーを取得します
+    ///
+    /// # 戻り値
+    ///
+    /// * `&Option<GenerationError>` - 生成プロセスに関するエラー（存在する場合）
+    pub fn generation(&self) -> &Option<GenerationError> {
+        &self.generation
     }
 
     /// パスフレーズのエラーを設定します
@@ -202,6 +227,20 @@ impl PasswordError {
     /// * `Self` - エラーが設定された新しいインスタンス
     pub(super) fn with_length_error(mut self, error: LengthError) -> Self {
         self.length = Some(error);
+        self
+    }
+
+    /// 生成プロセスのエラーを設定します
+    ///
+    /// # 引数
+    ///
+    /// * `error` - 設定するエラー
+    ///
+    /// # 戻り値
+    ///
+    /// * `Self` - エラーが設定された新しいインスタンス
+    pub(super) fn with_generation_error(mut self, error: GenerationError) -> Self {
+        self.generation = Some(error);
         self
     }
 }
