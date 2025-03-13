@@ -195,6 +195,71 @@ input[type="number"] {
   background-color: var(--secondary-color);
 }
 
+/* 情報セクションのスタイル */
+.info-container {
+  margin-top: 2rem;
+}
+
+.info-section {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.info-section:last-child {
+  margin-bottom: 0;
+}
+
+.info-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.info-section p {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #555;
+}
+
+.info-section p:last-child {
+  margin-bottom: 0;
+}
+
+/* 定義リストのスタイル */
+.info-section dl {
+  margin-top: 0.5rem;
+}
+
+.info-section dt {
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.info-section dt:first-child {
+  margin-top: 0;
+}
+
+.info-section dd {
+  margin-left: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #555;
+}
+
+.info-section dd:last-child {
+  margin-bottom: 0;
+}
+
 footer {
   text-align: center;
   margin-top: 2rem;
