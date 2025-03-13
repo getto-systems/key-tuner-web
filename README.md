@@ -76,6 +76,7 @@ You can now access the application at http://localhost:3000.
 To create a production build:
 
 ```bash
+npm run build:wasm
 npm run build
 ```
 
