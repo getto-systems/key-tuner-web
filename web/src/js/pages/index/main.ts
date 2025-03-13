@@ -38,7 +38,6 @@ async function setupDom(): Promise<void> {
         sendInitialValueToWasm(elements, wasm, fatalError);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error("Failed to initialize settings:", error);
         fatalError.show(`初期化エラー: ${errorMessage}`);
     }
 }
