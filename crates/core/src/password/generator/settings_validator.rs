@@ -90,7 +90,10 @@ impl<'a> TryFrom<&'a PasswordSettings> for ValidatedPasswordSettings<'a> {
 
 /// パスフレーズを検証し、有効な場合は元の文字列を返す
 fn validate_pass_phrase(text: &str) -> Result<&str, TextError> {
-    Ok(TextValidator::new(text).present()?.max_length(255)?.finish())
+    Ok(TextValidator::new(text)
+        .present()?
+        .max_length(255)?
+        .finish())
 }
 
 /// サービス名を検証し、有効な場合は元の文字列を返す
@@ -132,7 +135,7 @@ fn test_password_settings_try_into() {
     let result: Result<ValidatedPasswordSettings, _> = (&data).try_into();
     assert!(result.is_ok());
 
-    // 空のパスフレーズ（空文字列チェックを削除したので有効になる）
+    // 空のパスフレーズ（エラーになるべき）
     let data = PasswordSettings {
         pass_phrase: "".to_string(),
         service_name: "example.com".to_string(),
@@ -141,7 +144,7 @@ fn test_password_settings_try_into() {
         length: "12".to_string(),
     };
     let result: Result<ValidatedPasswordSettings, _> = (&data).try_into();
-    assert!(result.is_ok());
+    assert!(matches!(result, Err(err) if err.pass_phrase().is_some()));
 
     // 空のサービス名（空文字列チェックを削除したので有効になる）
     let data = PasswordSettings {

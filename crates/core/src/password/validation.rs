@@ -11,7 +11,7 @@ use crate::password::{
 /// # 使用例
 ///
 /// ```
-/// use key_tuner_core::password::validation::TextValidator;
+/// use key_tuner_core::TextValidator;
 /// use key_tuner_core::TextError;
 ///
 /// // テキストを検証
@@ -57,7 +57,7 @@ impl<'a> TextValidator<'a> {
     /// # 例
     ///
     /// ```
-    /// use key_tuner_core::password::validation::TextValidator;
+    /// use key_tuner_core::TextValidator;
     /// use key_tuner_core::TextError;
     ///
     /// // 有効なテキスト
@@ -86,7 +86,7 @@ impl<'a> TextValidator<'a> {
     /// # 例
     ///
     /// ```
-    /// use key_tuner_core::password::validation::TextValidator;
+    /// use key_tuner_core::TextValidator;
     /// use key_tuner_core::TextError;
     ///
     /// // 有効なテキスト
@@ -123,7 +123,7 @@ impl<'a> TextValidator<'a> {
 /// # 使用例
 ///
 /// ```
-/// use key_tuner_core::password::validation::ModeValidator;
+/// use key_tuner_core::ModeValidator;
 /// use key_tuner_core::ModeError;
 ///
 /// // 有効なモード
@@ -190,7 +190,7 @@ impl ModeValidator {
 /// # 使用例
 ///
 /// ```
-/// use key_tuner_core::password::validation::LengthValidator;
+/// use key_tuner_core::LengthValidator;
 /// use key_tuner_core::LengthError;
 ///
 /// // 有効な長さ
