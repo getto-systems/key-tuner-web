@@ -21,6 +21,6 @@ export default defineConfig({
   },
   // WebAssemblyのサポートを有効化
   optimizeDeps: {
-    exclude: ['./js/wasm/pkg/key_tuner_web.js'],
+    exclude: ['./js/wasm_artifacts/pkg/key_tuner_web.js'],
   },
 });
