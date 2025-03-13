@@ -124,6 +124,21 @@ input[type="radio"] {
   margin-right: 0.5rem;
 }
 
+/* テキストボックスのスタイル調整 */
+input[type="text"],
+input[type="number"] {
+  font-size: 1.1rem; /* テキストサイズを少し大きく */
+  padding: 0.5rem; /* テキストと枠の間に隙間を作る */
+  width: 100%; /* コントロール要素の幅に合わせる */
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+/* パスワード長さ入力フィールドの幅を調整 */
+#password-length {
+  width: 5rem; /* 2桁の数字が入る程度の幅 */
+}
+
 /* ラジオボタングループのスタイル */
 .radio-group {
   display: flex;
