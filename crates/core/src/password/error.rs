@@ -46,10 +46,13 @@ pub struct PasswordError {
 ///
 /// # バリアント
 ///
+/// * `Empty` - 入力が空の場合。
 /// * `TooLong(usize)` - 入力が指定された最大長を超えている場合。
 ///   パラメータは最大許容長を示します。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TextError {
+    /// 入力が空
+    Empty,
     /// 入力が長すぎる（最大長）
     TooLong(usize),
 }

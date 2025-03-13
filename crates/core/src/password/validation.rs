@@ -76,6 +76,35 @@ impl<'a> TextValidator<'a> {
         Ok(Self(self.0))
     }
 
+    /// テキストが空でないことを検証します
+    ///
+    /// # 戻り値
+    ///
+    /// * `Ok(Self)` - テキストが空でない場合
+    /// * `Err(TextError::Empty)` - テキストが空の場合
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use key_tuner_core::password::validation::TextValidator;
+    /// use key_tuner_core::TextError;
+    ///
+    /// // 有効なテキスト
+    /// let text = "example";
+    /// let result = TextValidator::new(text).present();
+    /// assert!(result.is_ok());
+    ///
+    /// // 空のテキスト
+    /// let result = TextValidator::new("").present();
+    /// assert!(matches!(result, Err(TextError::Empty)));
+    /// ```
+    pub fn present(self) -> Result<Self, TextError> {
+        if self.0.is_empty() {
+            return Err(TextError::Empty);
+        }
+        Ok(Self(self.0))
+    }
+
     /// 検証が完了した後、内部の文字列を取り出します
     ///
     /// # 戻り値
