@@ -49,12 +49,21 @@
         </div>
         
         <div class="control-group">
-          <label for="password-mode">生成モード</label>
-          <select id="password-mode">
-            <option value="ex" selected>Ex: 大文字小文字数字記号を含む</option>
-            <option value="full">Full: 大文字小文字数字を含む</option>
-            <option value="short">Short: 小文字数字のみ</option>
-          </select>
+          <label>生成モード</label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" id="password-mode-ex" name="password-mode" value="ex" checked>
+              <label for="password-mode-ex">Ex: 大文字小文字数字記号を含む</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="password-mode-full" name="password-mode" value="full">
+              <label for="password-mode-full">Full: 大文字小文字数字を含む</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="password-mode-short" name="password-mode" value="short">
+              <label for="password-mode-short">Short: 小文字数字のみ</label>
+            </div>
+          </div>
           <div id="password-mode-error" class="error-message"></div>
         </div>
         

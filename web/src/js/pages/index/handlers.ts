@@ -138,14 +138,7 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
             },
         },
 
-        // 生成モードの変更イベント
-        {
-            element: elements.passwordMode,
-            event: "change",
-            handler: () => {
-                wasm.set_password_mode(elements.passwordMode.value);
-            },
-        },
+        // 生成モードの変更イベント（ラジオボタン）は個別に設定
 
         // パスワード生成ボタンのクリックイベント
         {
@@ -191,6 +184,28 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
     // 定義に基づいてイベントハンドラを登録
     handlers.forEach(({ element, event, handler }) => {
         element.addEventListener(event, handler);
+    });
+
+    // ラジオボタンのイベントハンドラを設定
+    setupRadioButtonHandlers(elements, wasm);
+}
+
+/**
+ * ラジオボタンのイベントハンドラを設定
+ * @param {DomElements} elements - DOM要素の参照
+ * @param {KeyTunerWasm} wasm - KeyTunerWasm
+ */
+function setupRadioButtonHandlers(elements: DomElements, wasm: KeyTunerWasm): void {
+    // パスワードモードのラジオボタン
+    const radioElements = Array.from(elements.passwordMode.elements) as HTMLInputElement[];
+    
+    // 各ラジオボタンに変更イベントを設定
+    radioElements.forEach(radio => {
+        radio.addEventListener("change", () => {
+            if (radio.checked) {
+                wasm.set_password_mode(radio.value);
+            }
+        });
     });
 }
 
