@@ -32,10 +32,10 @@ async function setupDom(): Promise<void> {
         const wasm = await initKeyTunerWasm();
 
         // イベントハンドラを宣言的に設定
-        setupEventHandlers(elements, wasm);
+        setupEventHandlers(elements, wasm, fatalError);
 
         // 初期設定をWASMに通知
-        sendInitialValueToWasm(elements, wasm);
+        sendInitialValueToWasm(elements, wasm, fatalError);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Failed to initialize settings:", error);

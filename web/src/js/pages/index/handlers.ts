@@ -1,6 +1,7 @@
 // イベントハンドラとWASMコールバックを担当するモジュール
 
 import { KeyTunerWasm } from "../../wasm_artifacts/key-tuner-wasm";
+import { FatalErrorHandler } from "../../common/fatal_error";
 import { DomElements } from "./elements";
 
 /**
@@ -8,21 +9,6 @@ import { DomElements } from "./elements";
  * @param {DomElements} elements - DOM要素の参照
  */
 export function registerWasmCallbacks(elements: DomElements): void {
-    /**
-     * エラーメッセージを設定する（表示または非表示）
-     * @param {HTMLElement} element - エラーメッセージ要素
-     * @param {string | ""} message - 表示するエラーメッセージ（空文字列の場合は非表示）
-     */
-    const setError = (element: HTMLElement, message: "" | string | null): void => {
-        if (message === "") {
-            element.textContent = "";
-            element.classList.remove("show");
-        } else {
-            element.textContent = message === null ? "不明なエラー" : message;
-            element.classList.add("show");
-        }
-    };
-
     /**
      * 生成されたパスワードを表示する
      * @param {string} password - 生成されたパスワード
@@ -82,6 +68,21 @@ export function registerWasmCallbacks(elements: DomElements): void {
         draw_password_mode_error,
         draw_password_length_error,
     };
+
+    /**
+     * エラーメッセージを設定する（表示または非表示）
+     * @param {HTMLElement} element - エラーメッセージ要素
+     * @param {string | ""} message - 表示するエラーメッセージ（空文字列の場合は非表示）
+     */
+    function setError(element: HTMLElement, message: "" | string | null): void {
+        if (message === "") {
+            element.textContent = "";
+            element.classList.remove("show");
+        } else {
+            element.textContent = message === null ? "不明なエラー" : message;
+            element.classList.add("show");
+        }
+    }
 }
 
 // イベントハンドラの設定項目
@@ -95,8 +96,13 @@ interface EventHandlerConfig<T extends HTMLElement> {
  * イベントハンドラを宣言的に設定
  * @param {DomElements} elements - DOM要素の参照
  * @param {KeyTunerWasm} wasm - KeyTunerWasm
+ * @param {FatalErrorHandler<DomElements>} fatalError - 致命的エラーハンドラ
  */
-export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): void {
+export function setupEventHandlers(
+    elements: DomElements,
+    wasm: KeyTunerWasm,
+    fatalError: FatalErrorHandler<DomElements>,
+): void {
     // HTMLInputElement のハンドラー
     register([
         // パスワード長スライダーの変更イベント
@@ -107,7 +113,11 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
                 const length = input.value;
                 elements.lengthValue.textContent = length;
 
-                wasm.set_password_length(length);
+                safeWasmCall(
+                    () => wasm.set_password_length(length),
+                    "パスワード長の設定に失敗しました",
+                    fatalError,
+                );
             },
         },
 
@@ -116,7 +126,11 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
             element: elements.passPhrase,
             event: "input",
             handler: (input: HTMLInputElement) => {
-                wasm.set_pass_phrase(input.value);
+                safeWasmCall(
+                    () => wasm.set_pass_phrase(input.value),
+                    "パスフレーズの設定に失敗しました",
+                    fatalError,
+                );
             },
         },
 
@@ -125,7 +139,11 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
             element: elements.serviceName,
             event: "input",
             handler: (input: HTMLInputElement) => {
-                wasm.set_service_name(input.value);
+                safeWasmCall(
+                    () => wasm.set_service_name(input.value),
+                    "サービス名の設定に失敗しました",
+                    fatalError,
+                );
             },
         },
 
@@ -134,7 +152,11 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
             element: elements.version,
             event: "input",
             handler: (input: HTMLInputElement) => {
-                wasm.set_version(input.value);
+                safeWasmCall(
+                    () => wasm.set_version(input.value),
+                    "バージョンの設定に失敗しました",
+                    fatalError,
+                );
             },
         },
     ]);
@@ -146,7 +168,11 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
             event: "change",
             handler: (radioInput: HTMLInputElement) => {
                 if (radioInput.checked) {
-                    wasm.set_password_mode(radioInput.value);
+                    safeWasmCall(
+                        () => wasm.set_password_mode(radioInput.value),
+                        "パスワードモードの設定に失敗しました",
+                        fatalError,
+                    );
                 }
             },
         })),
@@ -159,7 +185,11 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
             element: elements.generateButton,
             event: "click",
             handler: (button: HTMLButtonElement) => {
-                wasm.generate_password();
+                safeWasmCall(
+                    () => wasm.generate_password(),
+                    "パスワードの生成に失敗しました",
+                    fatalError,
+                );
             },
         },
 
@@ -188,7 +218,7 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
                             }, 2000);
                         })
                         .catch((err) => {
-                            console.error("Failed to copy password:", err);
+                            console.error("パスワードのコピーに失敗しました:", err);
                         });
                 }
             },
@@ -214,40 +244,68 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
  * 初期設定をWASMに通知
  * @param {DomElements} elements - DOM要素の参照
  * @param {KeyTunerWasm} wasm - KeyTunerWasm
+ * @param {FatalErrorHandler<DomElements>} fatalError - 致命的エラーハンドラ
  */
-export function sendInitialValueToWasm(elements: DomElements, wasm: KeyTunerWasm): void {
+export function sendInitialValueToWasm(
+    elements: DomElements,
+    wasm: KeyTunerWasm,
+    fatalError: FatalErrorHandler<DomElements>,
+): void {
     // WASM初期設定項目
     interface InitialValue {
-        value: string;
-        setter: (value: string) => void;
+        setter: () => void;
+        errorMessage: string;
     }
 
     // 初期設定を宣言的に定義
     const initialValues: InitialValue[] = [
         {
-            value: elements.passPhrase.value,
-            setter: (value: string) => wasm.set_pass_phrase(value),
+            setter: () => wasm.set_pass_phrase(elements.passPhrase.value),
+            errorMessage: "パスフレーズの初期設定に失敗しました",
         },
         {
-            value: elements.serviceName.value,
-            setter: (value: string) => wasm.set_service_name(value),
+            setter: () => wasm.set_service_name(elements.serviceName.value),
+            errorMessage: "サービス名の初期設定に失敗しました",
         },
         {
-            value: elements.version.value,
-            setter: (value: string) => wasm.set_version(value),
+            setter: () => wasm.set_version(elements.version.value),
+            errorMessage: "バージョンの初期設定に失敗しました",
         },
         {
-            value: elements.passwordMode.value,
-            setter: (value: string) => wasm.set_password_mode(value),
+            setter: () => wasm.set_password_mode(elements.passwordMode.value),
+            errorMessage: "パスワードモードの初期設定に失敗しました",
         },
         {
-            value: elements.passwordLength.value,
-            setter: (value: string) => wasm.set_password_length(value),
+            setter: () => wasm.set_password_length(elements.passwordLength.value),
+            errorMessage: "パスワード長の初期設定に失敗しました",
         },
     ];
 
     // 定義に基づいて初期設定を適用
-    initialValues.forEach(({ value, setter }) => {
-        setter(value);
+    initialValues.forEach(({ setter, errorMessage }) => {
+        safeWasmCall(setter, errorMessage, fatalError);
     });
+}
+
+/**
+ * WASM関数呼び出しのエラーを処理する
+ * @param {Function} wasmFn - 呼び出すWASM関数
+ * @param {string} errorMessage - エラー発生時に表示するメッセージ
+ * @param {FatalErrorHandler<DomElements>} fatalError - 致命的エラーハンドラ
+ * @returns {boolean} 関数の実行が成功したかどうか
+ */
+function safeWasmCall(
+    wasmFn: () => void,
+    errorMessage: string,
+    fatalError: FatalErrorHandler<DomElements>,
+): boolean {
+    try {
+        wasmFn();
+        return true;
+    } catch (error) {
+        console.error(`${errorMessage}:`, error);
+        // 致命的エラーハンドラを使用してエラーを表示
+        fatalError.show(errorMessage);
+        return false;
+    }
 }
