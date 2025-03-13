@@ -105,19 +105,24 @@ export function setupEventHandlers(
 ): void {
     // HTMLInputElement のハンドラー
     register([
-        // パスワード長スライダーの変更イベント
+        // パスワード長の変更イベント
         {
             element: elements.passwordLength,
             event: "input",
             handler: (input: HTMLInputElement) => {
-                const length = input.value;
-                elements.lengthValue.textContent = length;
-
                 safeWasmCall(
-                    () => wasm.set_password_length(length),
+                    () => wasm.set_password_length(input.value),
                     "パスワード長の設定に失敗しました",
                     fatalError,
                 );
+            },
+        },
+        // パスワード長のフォーカスイベント
+        {
+            element: elements.passwordLength,
+            event: "focus",
+            handler: (input: HTMLInputElement) => {
+                input.select(); // テキストを全選択
             },
         },
 
@@ -133,6 +138,14 @@ export function setupEventHandlers(
                 );
             },
         },
+        // パスフレーズのフォーカスイベント
+        {
+            element: elements.passPhrase,
+            event: "focus",
+            handler: (input: HTMLInputElement) => {
+                input.select(); // テキストを全選択
+            },
+        },
 
         // サービス名の変更イベント
         {
@@ -146,6 +159,14 @@ export function setupEventHandlers(
                 );
             },
         },
+        // サービス名のフォーカスイベント
+        {
+            element: elements.serviceName,
+            event: "focus",
+            handler: (input: HTMLInputElement) => {
+                input.select(); // テキストを全選択
+            },
+        },
 
         // バージョンの変更イベント
         {
@@ -157,6 +178,14 @@ export function setupEventHandlers(
                     "バージョンの設定に失敗しました",
                     fatalError,
                 );
+            },
+        },
+        // バージョンのフォーカスイベント
+        {
+            element: elements.version,
+            event: "focus",
+            handler: (input: HTMLInputElement) => {
+                input.select(); // テキストを全選択
             },
         },
     ]);
