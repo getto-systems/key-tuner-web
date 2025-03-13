@@ -44,3 +44,6 @@ mod password;
 pub use password::data::PasswordSettings;
 pub use password::error::{LengthError, ModeError, PasswordError, TextError};
 pub use password::generator::PasswordGenerator;
+
+// 検証用の型を公開
+pub use password::validation::{LengthValidator, ModeValidator, TextValidator};
