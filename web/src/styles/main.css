@@ -53,7 +53,18 @@ header h1 {
   padding: 1rem;
   font-family: monospace;
   font-size: 1.2rem;
-  word-break: break-all;
+  white-space: nowrap;
+  overflow-x: auto;
+  display: none; /* 初期状態では非表示 */
+}
+
+.password-placeholder {
+  flex-grow: 1;
+  padding: 1rem;
+  font-size: 1.2rem;
+  color: #888; /* プレースホルダーテキストの色を薄く */
+  white-space: nowrap;
+  overflow-x: auto;
 }
 
 .controls {
@@ -154,6 +165,7 @@ input[type="number"] {
 .radio-option label {
   margin-bottom: 0;
   cursor: pointer;
+  font-size: 1.1rem; /* テキストボックスと同じサイズに設定 */
 }
 
 .button {
@@ -165,6 +177,7 @@ input[type="number"] {
   cursor: pointer;
   font-size: 1rem;
   transition: background-color 0.2s;
+  white-space: nowrap;
 }
 
 .button:hover {

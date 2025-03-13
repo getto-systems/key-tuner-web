@@ -16,8 +16,10 @@ export interface RadioButtonGroup {
 // DOM要素の型定義
 export interface DomElements {
     passwordOutput: HTMLElement;
+    passwordPlaceholder: HTMLElement;
     generateButton: HTMLButtonElement;
     copyButton: HTMLButtonElement;
+    copiedButton: HTMLButtonElement;
     passPhrase: HTMLInputElement;
     serviceName: HTMLInputElement;
     version: HTMLInputElement;
@@ -75,8 +77,12 @@ export function getFatalErrorElements(): FatalErrorElements {
  */
 export function getDomElements(): DomElements | null {
     const passwordOutput = document.getElementById("password-output") as HTMLElement | null;
+    const passwordPlaceholder = document.getElementById(
+        "password-placeholder",
+    ) as HTMLElement | null;
     const generateButton = document.getElementById("generate-button") as HTMLButtonElement | null;
     const copyButton = document.getElementById("copy-button") as HTMLButtonElement | null;
+    const copiedButton = document.getElementById("copied-button") as HTMLButtonElement | null;
     const passPhrase = document.getElementById("pass-phrase") as HTMLInputElement | null;
     const serviceName = document.getElementById("service-name") as HTMLInputElement | null;
     const version = document.getElementById("version") as HTMLInputElement | null;
@@ -116,8 +122,10 @@ export function getDomElements(): DomElements | null {
     // 一つでも要素が見つからない場合はnullを返す
     if (
         !passwordOutput ||
+        !passwordPlaceholder ||
         !generateButton ||
         !copyButton ||
+        !copiedButton ||
         !passPhrase ||
         !serviceName ||
         !version ||
@@ -134,8 +142,10 @@ export function getDomElements(): DomElements | null {
 
     return {
         passwordOutput,
+        passwordPlaceholder,
         generateButton,
         copyButton,
+        copiedButton,
         passPhrase,
         serviceName,
         version,
