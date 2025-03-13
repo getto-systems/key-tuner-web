@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
     "crates/core",
     "crates/web",
@@ -12,3 +13,10 @@ license = "GPL-3.0"
 
 [workspace.dependencies]
 wasm-bindgen = "0.2"
+
+[profile.release]
+# WASM サイズ最適化設定
+opt-level = 'z'  # サイズ最適化
+lto = true       # Link Time Optimization
+codegen-units = 1  # より良い最適化のために単一のコードジェネレーションユニットを使用
+panic = 'abort'  # パニック時のスタックトレース機能を無効化
