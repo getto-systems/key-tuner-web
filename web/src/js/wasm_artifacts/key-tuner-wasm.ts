@@ -7,6 +7,9 @@ export interface KeyTunerWasm {
     // パスワード生成メソッド
     generate_password(): void;
 
+    // パスワードコピーメソッド
+    copy_generated_password(): void;
+
     // パスワード設定メソッド
     set_pass_phrase(phrase: string): void;
     set_service_name(name: string): void;
