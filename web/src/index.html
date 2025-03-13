@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Key Tuner - パスワードジェネレーター</title>
-  <meta name="description" content="安全なパスワードを生成するツール">
+  <meta name="description" content="安全なパスワードを生成">
   <link rel="stylesheet" href="./styles/main.css">
 </head>
 <body>
   <div id="app">
     <header>
       <h1>Key Tuner</h1>
-      <p>安全なパスワードを生成するツール</p>
+      <p>安全なパスワードを生成</p>
     </header>
     
     <!-- 復帰不可能なエラーを表示するための要素 -->
@@ -32,19 +32,19 @@
       <div class="controls">
         <div class="control-group">
           <label for="pass-phrase">パスフレーズ</label>
-          <input type="text" id="pass-phrase" placeholder="あなたの秘密のフレーズを入力してください" value="default passphrase">
+          <input type="text" id="pass-phrase" placeholder="パスワード生成のベースとなる文字列" value="">
           <div id="pass-phrase-error" class="error-message"></div>
         </div>
         
         <div class="control-group">
           <label for="service-name">サービス名</label>
-          <input type="text" id="service-name" placeholder="パスワードを使用するサービス名を入力してください" value="default service">
+          <input type="text" id="service-name" placeholder="パスワードを使用するサービスの名前" value="">
           <div id="service-name-error" class="error-message"></div>
         </div>
         
         <div class="control-group">
           <label for="version">バージョン</label>
-          <input type="text" id="version" placeholder="バージョン番号を入力してください" value="1">
+          <input type="text" id="version" placeholder="異なるバージョンのパスワードを生成する場合に入力" value="">
           <div id="version-error" class="error-message"></div>
         </div>
         
@@ -57,7 +57,7 @@
             </div>
             <div class="radio-option">
               <input type="radio" id="password-mode-full" name="password-mode" value="full">
-              <label for="password-mode-full">Full: 大文字小文字数字を含む</label>
+              <label for="password-mode-full">Full: 大文字小文字数字記号を含む</label>
             </div>
             <div class="radio-option">
               <input type="radio" id="password-mode-short" name="password-mode" value="short">
@@ -69,7 +69,7 @@
         
         <div class="control-group">
           <label for="password-length">長さ:</label>
-          <input type="number" id="password-length" min="8" max="64" value="12">
+          <input type="number" id="password-length" min="8" max="64" value="32">
           <div id="password-length-error" class="error-message"></div>
         </div>
       </div>
