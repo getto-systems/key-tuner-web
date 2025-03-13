@@ -84,27 +84,27 @@ export function registerWasmCallbacks(elements: DomElements): void {
     };
 }
 
+// イベントハンドラの設定項目
+interface EventHandlerConfig<T extends HTMLElement> {
+    element: T;
+    event: string;
+    handler: (element: T) => void;
+}
+
 /**
  * イベントハンドラを宣言的に設定
  * @param {DomElements} elements - DOM要素の参照
  * @param {KeyTunerWasm} wasm - KeyTunerWasm
  */
 export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): void {
-    // イベントハンドラの設定項目
-    interface EventHandlerConfig {
-        element: HTMLElement;
-        event: string;
-        handler: () => void;
-    }
-
-    // イベントハンドラの設定を宣言的に定義
-    const handlers: EventHandlerConfig[] = [
+    // HTMLInputElement のハンドラー
+    register([
         // パスワード長スライダーの変更イベント
         {
             element: elements.passwordLength,
             event: "input",
-            handler: () => {
-                const length = elements.passwordLength.value;
+            handler: (input: HTMLInputElement) => {
+                const length = input.value;
                 elements.lengthValue.textContent = length;
 
                 wasm.set_password_length(length);
@@ -115,8 +115,8 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
         {
             element: elements.passPhrase,
             event: "input",
-            handler: () => {
-                wasm.set_pass_phrase(elements.passPhrase.value);
+            handler: (input: HTMLInputElement) => {
+                wasm.set_pass_phrase(input.value);
             },
         },
 
@@ -124,8 +124,8 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
         {
             element: elements.serviceName,
             event: "input",
-            handler: () => {
-                wasm.set_service_name(elements.serviceName.value);
+            handler: (input: HTMLInputElement) => {
+                wasm.set_service_name(input.value);
             },
         },
 
@@ -133,25 +133,32 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
         {
             element: elements.version,
             event: "input",
-            handler: () => {
-                wasm.set_version(elements.version.value);
+            handler: (input: HTMLInputElement) => {
+                wasm.set_version(input.value);
             },
         },
+    ]);
 
-        // 生成モードの変更イベント
-        {
-            element: elements.passwordMode,
+    // ラジオボタンのイベントハンドラ
+    register(
+        Array.from(elements.passwordMode.elements).map((radio) => ({
+            element: radio,
             event: "change",
-            handler: () => {
-                wasm.set_password_mode(elements.passwordMode.value);
+            handler: (radioInput: HTMLInputElement) => {
+                if (radioInput.checked) {
+                    wasm.set_password_mode(radioInput.value);
+                }
             },
-        },
+        })),
+    );
 
+    // HTMLButtonElement のハンドラー
+    register([
         // パスワード生成ボタンのクリックイベント
         {
             element: elements.generateButton,
             event: "click",
-            handler: () => {
+            handler: (button: HTMLButtonElement) => {
                 wasm.generate_password();
             },
         },
@@ -160,7 +167,7 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
         {
             element: elements.copyButton,
             event: "click",
-            handler: () => {
+            handler: (button: HTMLButtonElement) => {
                 const password = elements.passwordOutput.textContent;
 
                 // パスワードがデフォルトメッセージでない場合のみコピー
@@ -173,11 +180,11 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
                         .writeText(password)
                         .then(() => {
                             // コピー成功時の視覚的フィードバック
-                            const originalText = elements.copyButton.textContent;
-                            elements.copyButton.textContent = "コピーしました！";
+                            const originalText = button.textContent;
+                            button.textContent = "コピーしました！";
 
                             setTimeout(() => {
-                                elements.copyButton.textContent = originalText;
+                                button.textContent = originalText;
                             }, 2000);
                         })
                         .catch((err) => {
@@ -186,12 +193,21 @@ export function setupEventHandlers(elements: DomElements, wasm: KeyTunerWasm): v
                 }
             },
         },
-    ];
+    ]);
 
-    // 定義に基づいてイベントハンドラを登録
-    handlers.forEach(({ element, event, handler }) => {
-        element.addEventListener(event, handler);
-    });
+    /**
+     * イベントハンドラを要素に登録する
+     * @template T HTMLElementを継承した型
+     * @param {Array<EventHandlerConfig<T>>} handlers - 登録するイベントハンドラの設定配列
+     */
+    function register<T extends HTMLElement>(handlers: Array<EventHandlerConfig<T>>): void {
+        handlers.forEach(({ element, event, handler }) => {
+            element.addEventListener(event, () => {
+                // 型安全のために同じ要素を渡す
+                handler(element);
+            });
+        });
+    }
 }
 
 /**

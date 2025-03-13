@@ -1,6 +1,17 @@
 // DOM要素の取得を担当するモジュール
 
-import { FatalErrorElements, FatalErrorHandler, createFatalErrorHandler } from "../../common/fatal_error";
+import {
+    FatalErrorElements,
+    FatalErrorHandler,
+    createFatalErrorHandler,
+} from "../../common/fatal_error";
+
+// ラジオボタングループのラッパー型
+export interface RadioButtonGroup {
+    elements: NodeListOf<HTMLInputElement>;
+    value: string;
+    disabled: boolean;
+}
 
 // DOM要素の型定義
 export interface DomElements {
@@ -10,7 +21,7 @@ export interface DomElements {
     passPhrase: HTMLInputElement;
     serviceName: HTMLInputElement;
     version: HTMLInputElement;
-    passwordMode: HTMLSelectElement;
+    passwordMode: RadioButtonGroup;
     passwordLength: HTMLInputElement;
     lengthValue: HTMLElement;
     // エラー要素
@@ -70,7 +81,29 @@ export function getDomElements(): DomElements | null {
     const passPhrase = document.getElementById("pass-phrase") as HTMLInputElement | null;
     const serviceName = document.getElementById("service-name") as HTMLInputElement | null;
     const version = document.getElementById("version") as HTMLInputElement | null;
-    const passwordMode = document.getElementById("password-mode") as HTMLSelectElement | null;
+    // ラジオボタングループの取得
+    const passwordModeElements = document.getElementsByName(
+        "password-mode",
+    ) as NodeListOf<HTMLInputElement>;
+
+    // ラジオボタングループのラッパーオブジェクトを作成
+    const passwordMode: RadioButtonGroup | null =
+        passwordModeElements.length > 0
+            ? {
+                  elements: passwordModeElements,
+                  get value() {
+                      const elements = Array.from(this.elements) as HTMLInputElement[];
+                      const checked = elements.find((el) => el.checked);
+                      return checked ? checked.value : "";
+                  },
+                  set disabled(isDisabled: boolean) {
+                      const elements = Array.from(this.elements) as HTMLInputElement[];
+                      elements.forEach((el) => {
+                          el.disabled = isDisabled;
+                      });
+                  },
+              }
+            : null;
     const passwordLength = document.getElementById("password-length") as HTMLInputElement | null;
     const lengthValue = document.getElementById("length-value") as HTMLElement | null;
     // エラー要素

@@ -119,8 +119,26 @@ input[type="range"] {
   width: 100%;
 }
 
-input[type="checkbox"] {
+input[type="checkbox"],
+input[type="radio"] {
   margin-right: 0.5rem;
+}
+
+/* ラジオボタングループのスタイル */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+}
+
+.radio-option label {
+  margin-bottom: 0;
+  cursor: pointer;
 }
 
 .button {
