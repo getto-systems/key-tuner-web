@@ -1,6 +1,6 @@
 // アプリケーションのメインエントリポイント
 
-import { initKeyTunerWasm } from "../../wasm_artifacts/key-tuner-wasm";
+import { initKeyTunerWasm } from "../../wasm_artifacts/key_tuner_wasm";
 import { initDomElements } from "./elements";
 import { registerWasmCallbacks, setupEventHandlers, sendInitialValueToWasm } from "./handlers";
 

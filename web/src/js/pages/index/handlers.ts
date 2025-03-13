@@ -1,6 +1,6 @@
 // イベントハンドラとWASMコールバックを担当するモジュール
 
-import { KeyTunerWasm } from "../../wasm_artifacts/key-tuner-wasm";
+import { KeyTunerWasm } from "../../wasm_artifacts/key_tuner_wasm";
 import { FatalErrorHandler } from "../../common/fatal_error";
 import { DomElements } from "./elements";
 
