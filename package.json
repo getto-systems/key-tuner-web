@@ -21,7 +21,7 @@
     "rust"
   ],
   "author": "shun@getto.systems",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "devDependencies": {
   }
 }
