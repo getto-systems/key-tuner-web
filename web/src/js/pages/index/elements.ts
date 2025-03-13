@@ -23,7 +23,6 @@ export interface DomElements {
     version: HTMLInputElement;
     passwordMode: RadioButtonGroup;
     passwordLength: HTMLInputElement;
-    lengthValue: HTMLElement;
     // エラー要素
     passPhraseError: HTMLElement;
     serviceNameError: HTMLElement;
@@ -105,7 +104,6 @@ export function getDomElements(): DomElements | null {
               }
             : null;
     const passwordLength = document.getElementById("password-length") as HTMLInputElement | null;
-    const lengthValue = document.getElementById("length-value") as HTMLElement | null;
     // エラー要素
     const passPhraseError = document.getElementById("pass-phrase-error") as HTMLElement | null;
     const serviceNameError = document.getElementById("service-name-error") as HTMLElement | null;
@@ -125,7 +123,6 @@ export function getDomElements(): DomElements | null {
         !version ||
         !passwordMode ||
         !passwordLength ||
-        !lengthValue ||
         !passPhraseError ||
         !serviceNameError ||
         !versionError ||
@@ -144,7 +141,6 @@ export function getDomElements(): DomElements | null {
         version,
         passwordMode,
         passwordLength,
-        lengthValue,
         // エラー要素
         passPhraseError,
         serviceNameError,
