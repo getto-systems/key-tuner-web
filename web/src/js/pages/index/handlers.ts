@@ -7,8 +7,9 @@ import { DomElements } from "./elements";
 /**
  * WASMから呼び出される関数をグローバルスコープに割り当て
  * @param {DomElements} elements - DOM要素の参照
+ * @param {FatalErrorHandler<DomElements>} fatalError - 致命的エラーハンドラ
  */
-export function registerWasmCallbacks(elements: DomElements): void {
+export function registerWasmCallbacks(elements: DomElements, fatalError: FatalErrorHandler<DomElements>): void {
     /**
      * 生成されたパスワードを表示する
      * @param {string} password - 生成されたパスワード
@@ -57,6 +58,28 @@ export function registerWasmCallbacks(elements: DomElements): void {
         setError(elements.passwordLengthError, errorMessage);
     };
 
+    /**
+     * 生成されたパスワードをクリップボードに貼り付ける
+     * @param {string} password - クリップボードにコピーするパスワード
+     */
+    const paste_generated_password_to_clipboard = (password: string): void => {
+        navigator.clipboard
+            .writeText(password)
+            .then(() => {
+                // コピー成功時の視覚的フィードバック
+                const copyButton = elements.copyButton;
+                const originalText = copyButton.textContent;
+                copyButton.textContent = "コピーしました！";
+
+                setTimeout(() => {
+                    copyButton.textContent = originalText;
+                }, 2000);
+            })
+            .catch((err) => {
+                fatalError.show("パスワードのコピーに失敗しました");
+            });
+    };
+
     // 名前空間に割り当て
     // 現状、この方法以外では wasm 側に js のメソッドを公開する方法がない
     // 名前の衝突が起こりにくいような名前で登録を行う
@@ -67,6 +90,7 @@ export function registerWasmCallbacks(elements: DomElements): void {
         draw_version_error,
         draw_password_mode_error,
         draw_password_length_error,
+        paste_generated_password_to_clipboard,
     };
 
     /**
@@ -235,20 +259,12 @@ export function setupEventHandlers(
                     password !== "パスワードがここに表示されます" &&
                     password !== "エラーが発生しました"
                 ) {
-                    navigator.clipboard
-                        .writeText(password)
-                        .then(() => {
-                            // コピー成功時の視覚的フィードバック
-                            const originalText = button.textContent;
-                            button.textContent = "コピーしました！";
-
-                            setTimeout(() => {
-                                button.textContent = originalText;
-                            }, 2000);
-                        })
-                        .catch((err) => {
-                            console.error("パスワードのコピーに失敗しました:", err);
-                        });
+                    // WASMのcopy_generated_password関数を使用
+                    safeWasmCall(
+                        () => wasm.copy_generated_password(),
+                        "パスワードのコピーに失敗しました",
+                        fatalError,
+                    );
                 }
             },
         },

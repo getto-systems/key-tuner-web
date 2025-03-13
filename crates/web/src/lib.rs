@@ -30,12 +30,15 @@ extern "C" {
     fn draw_version_error(error_message: String);
     fn draw_password_mode_error(error_message: String);
     fn draw_password_length_error(error_message: String);
+    // 生成されたパスワードをクリップボードに貼り付ける関数
+    fn paste_generated_password_to_clipboard(password: String);
 }
 
 // フロントエンド用のパスワード設定
 #[derive(Debug, Clone, Default)]
 struct PasswordConfig {
     settings: PasswordSettings,
+    generated_password: Option<String>,
 }
 
 impl PasswordConfig {
@@ -48,10 +51,12 @@ impl PasswordConfig {
     fn generate_password(&mut self) {
         match PasswordGenerator::generate(&self.settings) {
             Ok(password) => {
-                self.draw_generated_password(Some(password));
+                self.generated_password = Some(password);
+                self.draw_generated_password(self.generated_password.clone());
                 self.draw_error(None);
             }
             Err(err) => {
+                self.generated_password = None;
                 self.draw_generated_password(None);
                 self.draw_error(Some(err));
             }
@@ -230,5 +235,17 @@ pub fn set_password_length(length: JsValue) {
 
         // 設定を検証し、エラーを更新
         config_ref.validate_settings();
+    });
+}
+
+#[wasm_bindgen]
+pub fn copy_generated_password() {
+    PASSWORD_CONFIG.with(|config| {
+        let config_ref = config.borrow();
+        
+        // generated_passwordがSome(password)の場合にクリップボードにコピー
+        if let Some(password) = &config_ref.generated_password {
+            paste_generated_password_to_clipboard(password.clone());
+        }
     });
 }

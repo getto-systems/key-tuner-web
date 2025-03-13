@@ -25,7 +25,7 @@ async function setupDom(): Promise<void> {
     const { elements, fatalError } = domInit;
 
     // WASMから呼び出される関数をグローバルスコープに割り当て
-    registerWasmCallbacks(elements);
+    registerWasmCallbacks(elements, fatalError);
 
     try {
         // WASMモジュールを初期化して安全な呼び出し関数を作成
