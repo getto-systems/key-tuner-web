@@ -9,13 +9,25 @@ import { DomElements } from "./elements";
  * @param {DomElements} elements - DOM要素の参照
  * @param {FatalErrorHandler<DomElements>} fatalError - 致命的エラーハンドラ
  */
-export function registerWasmCallbacks(elements: DomElements, fatalError: FatalErrorHandler<DomElements>): void {
+export function registerWasmCallbacks(
+    elements: DomElements,
+    fatalError: FatalErrorHandler<DomElements>,
+): void {
     /**
      * 生成されたパスワードを表示する
      * @param {string} password - 生成されたパスワード
      */
     const draw_generated_password = (password: string): void => {
-        elements.passwordOutput.textContent = password;
+        if (password === "") {
+            // 空文字列の場合、パスワード出力を隠してプレースホルダーを表示
+            elements.passwordOutput.style.display = "none";
+            elements.passwordPlaceholder.style.display = "block";
+        } else {
+            // パスワードがある場合、パスワード出力を表示してプレースホルダーを隠す
+            elements.passwordOutput.textContent = password;
+            elements.passwordOutput.style.display = "block";
+            elements.passwordPlaceholder.style.display = "none";
+        }
     };
 
     /**
@@ -67,12 +79,14 @@ export function registerWasmCallbacks(elements: DomElements, fatalError: FatalEr
             .writeText(password)
             .then(() => {
                 // コピー成功時の視覚的フィードバック
-                const copyButton = elements.copyButton;
-                const originalText = copyButton.textContent;
-                copyButton.textContent = "コピーしました！";
+                // コピーボタンを非表示にし、コピーしましたボタンを表示する
+                elements.copyButton.style.display = "none";
+                elements.copiedButton.style.display = "inline-block";
 
                 setTimeout(() => {
-                    copyButton.textContent = originalText;
+                    // 2秒後に元の状態に戻す
+                    elements.copyButton.style.display = "inline-block";
+                    elements.copiedButton.style.display = "none";
                 }, 2000);
             })
             .catch((err) => {
@@ -251,21 +265,12 @@ export function setupEventHandlers(
             element: elements.copyButton,
             event: "click",
             handler: (button: HTMLButtonElement) => {
-                const password = elements.passwordOutput.textContent;
-
-                // パスワードがデフォルトメッセージでない場合のみコピー
-                if (
-                    password &&
-                    password !== "パスワードがここに表示されます" &&
-                    password !== "エラーが発生しました"
-                ) {
-                    // WASMのcopy_generated_password関数を使用
-                    safeWasmCall(
-                        () => wasm.copy_generated_password(),
-                        "パスワードのコピーに失敗しました",
-                        fatalError,
-                    );
-                }
+                // WASMのcopy_generated_password関数を使用
+                safeWasmCall(
+                    () => wasm.copy_generated_password(),
+                    "パスワードのコピーに失敗しました",
+                    fatalError,
+                );
             },
         },
     ]);

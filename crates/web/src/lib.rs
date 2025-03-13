@@ -85,10 +85,23 @@ impl PasswordConfig {
 
     // 生成されたパスワードを描画するメソッド
     fn draw_generated_password(&self, password: Option<String>) {
-        match password {
-            Some(pass) => draw_generated_password(pass),
-            None => draw_generated_password("パスワードがここに表示されます".to_string()),
-        }
+        draw_generated_password(format_password(password));
+    }
+}
+
+/// パスワードをフォーマットする関数
+///
+/// # 引数
+///
+/// * `password` - `Option<String>` 型のパスワード
+///
+/// # 戻り値
+///
+/// * `String` - フォーマットされたパスワード文字列（Noneの場合は空文字列）
+fn format_password(password: Option<String>) -> String {
+    match password {
+        Some(pass) => pass,
+        None => "".to_string(),
     }
 }
 
