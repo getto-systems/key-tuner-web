@@ -65,90 +65,22 @@ impl PasswordConfig {
 
     // エラーを描画するメソッド
     fn draw_error(&self, err: Option<PasswordError>) {
-        if let Some(error) = err {
-            // パスフレーズのエラー
-            if let Some(pass_phrase_err) = error.pass_phrase() {
-                match pass_phrase_err {
-                    TextError::TooLong(max_len) => {
-                        draw_pass_phrase_error(format!(
-                            "パスフレーズが長すぎます（最大{}文字）",
-                            max_len
-                        ));
-                    }
-                }
-            } else {
-                draw_pass_phrase_error("".to_string());
-            }
+        let err = err.unwrap_or_default();
 
-            // サービス名のエラー
-            if let Some(service_name_err) = error.service_name() {
-                match service_name_err {
-                    TextError::TooLong(max_len) => {
-                        draw_service_name_error(format!(
-                            "サービス名が長すぎます（最大{}文字）",
-                            max_len
-                        ));
-                    }
-                }
-            } else {
-                draw_service_name_error("".to_string());
-            }
+        // パスフレーズのエラー
+        draw_pass_phrase_error(format_text_error("パスフレーズ", err.pass_phrase()));
 
-            // バージョンのエラー
-            if let Some(version_err) = error.version() {
-                match version_err {
-                    TextError::TooLong(max_len) => {
-                        draw_version_error(format!(
-                            "バージョンが長すぎます（最大{}文字）",
-                            max_len
-                        ));
-                    }
-                }
-            } else {
-                draw_version_error("".to_string());
-            }
+        // サービス名のエラー
+        draw_service_name_error(format_text_error("サービス名", err.service_name()));
 
-            // モードのエラー
-            if let Some(mode_err) = error.mode() {
-                match mode_err {
-                    ModeError::InvalidMode => {
-                        draw_password_mode_error("不正なパスワード生成モードです".to_string());
-                    }
-                }
-            } else {
-                draw_password_mode_error("".to_string());
-            }
+        // バージョンのエラー
+        draw_version_error(format_text_error("バージョン", err.version()));
 
-            // 長さのエラー
-            if let Some(length_err) = error.length() {
-                match length_err {
-                    LengthError::InvalidLength => {
-                        draw_password_length_error("不正なパスワード長です".to_string());
-                    }
-                    LengthError::BelowMinimum(min) => {
-                        draw_password_length_error(format!(
-                            "パスワード長が短すぎます（最小{}文字）",
-                            min
-                        ));
-                    }
-                    LengthError::ExceedsMaximum(max) => {
-                        draw_password_length_error(format!(
-                            "パスワード長が長すぎます（最大{}文字）",
-                            max
-                        ));
-                    }
-                }
-            } else {
-                draw_password_length_error("".to_string());
-            }
-        } else {
-            // エラーがない場合は、すべてのエラー表示をクリア
-            draw_pass_phrase_error("".to_string());
-            draw_service_name_error("".to_string());
-            draw_version_error("".to_string());
-            draw_password_mode_error("".to_string());
-            draw_password_length_error("".to_string());
-        }
+        // モードのエラー
+        draw_password_mode_error(format_mode_error(err.mode()));
+
+        // 長さのエラー
+        draw_password_length_error(format_length_error(err.length()));
     }
 
     // 生成されたパスワードを描画するメソッド
@@ -157,6 +89,68 @@ impl PasswordConfig {
             Some(pass) => draw_generated_password(pass),
             None => draw_generated_password("パスワードがここに表示されます".to_string()),
         }
+    }
+}
+
+/// テキストエラーをフォーマットする関数
+///
+/// # 引数
+///
+/// * `prefix` - エラーメッセージの前に付けるテキスト（例：「パスフレーズ」、「サービス名」など）
+/// * `err` - `Option<TextError>` 型のエラー
+///
+/// # 戻り値
+///
+/// * `String` - フォーマットされたエラーメッセージ文字列
+fn format_text_error(prefix: &'static str, err: &Option<TextError>) -> String {
+    match err {
+        Some(error) => match *error {
+            TextError::Empty => format!("{}を入力してください", prefix),
+            TextError::TooLong(max_len) => format!("{}が長すぎます（最大{}文字）", prefix, max_len),
+        },
+        None => "".to_string(),
+    }
+}
+
+/// モードエラーをフォーマットする関数
+///
+/// # 引数
+///
+/// * `err` - `Option<ModeError>` 型のエラー
+///
+/// # 戻り値
+///
+/// * `String` - フォーマットされたエラーメッセージ文字列
+fn format_mode_error(err: &Option<ModeError>) -> String {
+    match err {
+        Some(error) => match *error {
+            ModeError::InvalidMode => "不正なパスワード生成モードです".to_string(),
+        },
+        None => "".to_string(),
+    }
+}
+
+/// 長さエラーをフォーマットする関数
+///
+/// # 引数
+///
+/// * `err` - `Option<LengthError>` 型のエラー
+///
+/// # 戻り値
+///
+/// * `String` - フォーマットされたエラーメッセージ文字列
+fn format_length_error(err: &Option<LengthError>) -> String {
+    match err {
+        Some(error) => match *error {
+            LengthError::InvalidLength => "不正なパスワード長です".to_string(),
+            LengthError::BelowMinimum(min) => {
+                format!("パスワード長が短すぎます（最小{}文字）", min)
+            }
+            LengthError::ExceedsMaximum(max) => {
+                format!("パスワード長が長すぎます（最大{}文字）", max)
+            }
+        },
+        None => "".to_string(),
     }
 }
 
@@ -242,7 +236,7 @@ pub fn set_password_length(length: JsValue) {
 pub fn copy_generated_password() {
     PASSWORD_CONFIG.with(|config| {
         let config_ref = config.borrow();
-        
+
         // generated_passwordがSome(password)の場合にクリップボードにコピー
         if let Some(password) = &config_ref.generated_password {
             paste_generated_password_to_clipboard(password.clone());

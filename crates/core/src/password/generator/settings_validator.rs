@@ -90,7 +90,7 @@ impl<'a> TryFrom<&'a PasswordSettings> for ValidatedPasswordSettings<'a> {
 
 /// パスフレーズを検証し、有効な場合は元の文字列を返す
 fn validate_pass_phrase(text: &str) -> Result<&str, TextError> {
-    Ok(TextValidator::new(text).max_length(255)?.finish())
+    Ok(TextValidator::new(text).present()?.max_length(255)?.finish())
 }
 
 /// サービス名を検証し、有効な場合は元の文字列を返す
