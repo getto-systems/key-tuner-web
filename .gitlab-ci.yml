@@ -32,6 +32,9 @@ bump_version:
 
     image: node:latest
 
+    variables:
+        BUMP_SCRIPT: ".ci/bump-version.sh"
+
     before_script:
         - git config user.email admin@getto.systems
         - git config user.name getto
@@ -39,4 +42,4 @@ bump_version:
         - export PATH=$PATH:./vendor/getto-systems/git-post/bin
     script:
         - curl $TRELLIS_CI_BUMP_VERSION/bump_version.sh | bash
-        - curl $TRELLIS_CI_BUMP_VERSION/request.sh | bash -s -- ./.ci/bump_version.sh
+        - curl $TRELLIS_CI_BUMP_VERSION/request.sh | bash -s -- ./.ci/bump-message.sh
