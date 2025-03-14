@@ -102,7 +102,7 @@ release_deploy_public:
             - release@getto-systems-base/projects/key-tuner
         changes:
             - .release-version
-            - web/public/
+            - web/public/**/*
     except:
         refs:
             - triggers
