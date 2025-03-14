@@ -1,19 +1,19 @@
 #!/bin/bash
 set -e
 
-if [ -n "$AWS_ACCESS_KEY_ID" ]; then
+if [ -z "$AWS_ACCESS_KEY_ID" ]; then
     echo "AWS_ACCESS_KEY_ID is not defined"
     exit 1
 fi
-if [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
+if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
     echo "AWS_SECRET_ACCESS_KEY is not defined"
     exit 1
 fi
-if [ -n "$AWS_DEFAULT_REGION" ]; then
+if [ -z "$AWS_DEFAULT_REGION" ]; then
     echo "AWS_DEFAULT_REGION is not defined"
     exit 1
 fi
-if [ -n "$S3_BUCKET" ]; then
+if [ -z "$S3_BUCKET" ]; then
     echo "S3_BUCKET is not defined"
     exit 1
 fi
