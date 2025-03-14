@@ -80,7 +80,27 @@ npm run build:wasm
 npm run build
 ```
 
-The build output will be in the `web/dist` directory.
+The build output will be in the `web/dist/{VERSION}` directory, where `{VERSION}` is the current version from the `.release-version` file.
+
+## Deployment
+
+The application is deployed to the following URL pattern:
+
+```
+https://key-tuner.getto.systems/{VERSION}/index.html
+```
+
+Where `{VERSION}` is the version number from the `.release-version` file.
+
+### CI/CD Deployment
+
+The application is automatically built and deployed when a new version is released. The deployment process is handled by GitLab CI/CD and configured in the `.gitlab-ci.yml` file.
+
+The deployment process:
+
+1. Reads the version from `.release-version`
+2. Builds the application with the version-specific path
+3. Deploys the built files to the production server
 
 ## Testing
 

@@ -1,5 +1,9 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import fs from 'fs';
+
+// Read version from .release-version file
+const version = fs.readFileSync(resolve(__dirname, '../.release-version'), 'utf-8').trim();
 
 export default defineConfig({
   // ルートディレクトリを指定
@@ -15,6 +19,8 @@ export default defineConfig({
     target: 'esnext',
     outDir: '../dist',
   },
+  // Set base path for assets to include version
+  base: `/${version}/`,
   server: {
     port: 3000,
     open: true,
