@@ -23,6 +23,8 @@ VERSION=$(cat .release-version)
 echo "Building version $VERSION"
 
 npm ci
+cargo install wasm-pack
+
 npm run build:wasm
 npm run build
 
