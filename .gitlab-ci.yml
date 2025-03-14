@@ -4,7 +4,7 @@ stages:
 
 variables:
     TRELLIS_GIT_POST: https://trellis.getto.systems/git/post/1.5.2
-    TRELLIS_CI_BUMP_VERSION: https://trellis.getto.systems/ci/bump-version/1.10.2
+    TRELLIS_CI_BUMP_VERSION: https://trellis.getto.systems/ci/bump-version/1.15.0
     TRELLIS_PSYCHER_GETTO: https://trellis.getto.systems/psycher/getto/2.7.2
 
 test:

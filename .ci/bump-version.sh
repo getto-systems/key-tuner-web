@@ -9,3 +9,4 @@ for target in $(find . -name package.json); do
 done
 
 npm install
+rm CHANGELOG.md
