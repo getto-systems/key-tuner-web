@@ -95,6 +95,33 @@ release_deploy:
     script:
         - ./scripts/deploy.sh
 
+release_deploy_public:
+    stage: release_deploy
+    only:
+        refs:
+            - release@getto-systems-base/projects/key-tuner
+        changes:
+            - .release-version
+            - web/public/
+    except:
+        refs:
+            - triggers
+            - schedules
+    when: on_success
+
+    image: debian:latest
+
+    # Add the following environment variables in CI/CD configuration
+    # AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    # AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    # AWS_DEFAULT_REGION: "ap-northeast-1"
+    # S3_BUCKET: "key-tuner.getto.systems"
+
+    before_script:
+        - apt-get update && apt-get install -y awscli
+    script:
+        - ./scripts/deploy-public.sh
+
 release_success:
     stage: release_notify
     only:
