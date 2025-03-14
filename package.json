@@ -1,6 +1,6 @@
 {
   "name": "key-tuner",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Password generator",
   "private": true,
   "workspaces": [
