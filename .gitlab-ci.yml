@@ -69,11 +69,10 @@ release:
 
 release_deploy:
     stage: release_deploy
-    only:
-        refs:
-            - release@getto-systems-base/projects/key-tuner
-        changes:
-            - .release-version
+    rules:
+        - if: $CI_COMMIT_REF_NAME = release@getto-systems-base/projects/key-tuner
+          changes:
+              - .release-version
     except:
         refs:
             - triggers
@@ -98,8 +97,7 @@ release_deploy:
 release_deploy_public:
     stage: release_deploy
     rules:
-        - refs:
-              - release@getto-systems-base/projects/key-tuner
+        - if: $CI_COMMIT_REF_NAME = release@getto-systems-base/projects/key-tuner
           changes:
               - .release-version
               - web/public/**/*
