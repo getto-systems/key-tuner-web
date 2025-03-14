@@ -25,7 +25,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                 const currentUrl = window.location.href;
                 const newUrl = replaceVersionInUrl(currentUrl, version);
 
-                // URLの置換に失敗した場合
+                // URLの置換に失敗した場合は fetch せずにこのバージョンが存在しなかったものとして扱う
                 if (newUrl === null) {
                     return false;
                 }
