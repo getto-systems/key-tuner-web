@@ -3,9 +3,13 @@
 import { initKeyTunerWasm } from "../../wasm_artifacts/key_tuner_wasm";
 import { initDomElements } from "./elements";
 import { registerWasmCallbacks, setupEventHandlers, sendInitialValueToWasm } from "./handlers";
+import { checkAndRedirectToLatestVersion } from "../../common/version_checker";
 
 // アプリケーションの起動
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
+    // 最新バージョンのチェックとリダイレクト
+    await checkAndRedirectToLatestVersion();
+    
     // DOMイベントのセットアップ
     setupDom();
 });
