@@ -17,6 +17,7 @@ export interface RadioButtonGroup {
 export interface DomElements {
     passwordOutput: HTMLElement;
     passwordPlaceholder: HTMLElement;
+    passwordForm: HTMLFormElement;
     generateButton: HTMLButtonElement;
     copyButton: HTMLButtonElement;
     copiedButton: HTMLButtonElement;
@@ -80,6 +81,7 @@ export function getDomElements(): DomElements | null {
     const passwordPlaceholder = document.getElementById(
         "password-placeholder",
     ) as HTMLElement | null;
+    const passwordForm = document.getElementById("password-form") as HTMLFormElement | null;
     const generateButton = document.getElementById("generate-button") as HTMLButtonElement | null;
     const copyButton = document.getElementById("copy-button") as HTMLButtonElement | null;
     const copiedButton = document.getElementById("copied-button") as HTMLButtonElement | null;
@@ -123,6 +125,7 @@ export function getDomElements(): DomElements | null {
     if (
         !passwordOutput ||
         !passwordPlaceholder ||
+        !passwordForm ||
         !generateButton ||
         !copyButton ||
         !copiedButton ||
@@ -143,6 +146,7 @@ export function getDomElements(): DomElements | null {
     return {
         passwordOutput,
         passwordPlaceholder,
+        passwordForm,
         generateButton,
         copyButton,
         copiedButton,
