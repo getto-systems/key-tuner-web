@@ -5,7 +5,7 @@ for target in $(find . -name Cargo.toml); do
 done
 
 for target in $(find . -name package.json); do
-  bump_sync $target 's/version: "[0-9.-]\+"/version = "'$(cat .release-version)'"/'
+  bump_sync $target 's/"version": "[0-9.-]\+"/"version": "'$(cat .release-version)'"/'
 done
 
 npm install
