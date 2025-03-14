@@ -32,52 +32,54 @@
         <button id="copied-button" class="button" style="display: none;">コピーしました！</button>
       </div>
       
-      <div class="controls">
-        <div class="control-group">
-          <label for="pass-phrase">パスフレーズ</label>
-          <input type="text" id="pass-phrase" placeholder="パスワード生成のベースとなる文字列" value="">
-          <div id="pass-phrase-error" class="error-message show">パスフレーズを入力してください</div>
-        </div>
-        
-        <div class="control-group">
-          <label for="service-name">サービス名</label>
-          <input type="text" id="service-name" placeholder="パスワードを使用するサービスの名前" value="">
-          <div id="service-name-error" class="error-message"></div>
-        </div>
-        
-        <div class="control-group">
-          <label for="version">バージョン</label>
-          <input type="text" id="version" placeholder="異なるバージョンのパスワードを生成する場合に入力" value="">
-          <div id="version-error" class="error-message"></div>
-        </div>
-        
-        <div class="control-group">
-          <label>生成モード</label>
-          <div class="radio-group">
-            <div class="radio-option">
-              <input type="radio" id="password-mode-ex" name="password-mode" value="ex" checked>
-              <label for="password-mode-ex">Ex: 大文字小文字数字記号を含む</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="password-mode-full" name="password-mode" value="full">
-              <label for="password-mode-full">Full: 大文字小文字数字記号を含む</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="password-mode-short" name="password-mode" value="short">
-              <label for="password-mode-short">Short: 小文字数字のみ</label>
-            </div>
+      <form id="password-form">
+        <div class="controls">
+          <div class="control-group">
+            <label for="pass-phrase">パスフレーズ</label>
+            <input type="text" id="pass-phrase" placeholder="パスワード生成のベースとなる文字列" value="">
+            <div id="pass-phrase-error" class="error-message show">パスフレーズを入力してください</div>
           </div>
-          <div id="password-mode-error" class="error-message"></div>
+          
+          <div class="control-group">
+            <label for="service-name">サービス名</label>
+            <input type="text" id="service-name" placeholder="パスワードを使用するサービスの名前" value="">
+            <div id="service-name-error" class="error-message"></div>
+          </div>
+          
+          <div class="control-group">
+            <label for="version">バージョン</label>
+            <input type="text" id="version" placeholder="異なるバージョンのパスワードを生成する場合に入力" value="">
+            <div id="version-error" class="error-message"></div>
+          </div>
+          
+          <div class="control-group">
+            <label>生成モード</label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" id="password-mode-ex" name="password-mode" value="ex" checked>
+                <label for="password-mode-ex">Ex: 大文字小文字数字記号を含む</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" id="password-mode-full" name="password-mode" value="full">
+                <label for="password-mode-full">Full: 大文字小文字数字記号を含む</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" id="password-mode-short" name="password-mode" value="short">
+                <label for="password-mode-short">Short: 小文字数字のみ</label>
+              </div>
+            </div>
+            <div id="password-mode-error" class="error-message"></div>
+          </div>
+          
+          <div class="control-group">
+            <label for="password-length">長さ:</label>
+            <input type="number" id="password-length" min="8" max="64" value="32">
+            <div id="password-length-error" class="error-message"></div>
+          </div>
         </div>
         
-        <div class="control-group">
-          <label for="password-length">長さ:</label>
-          <input type="number" id="password-length" min="8" max="64" value="32">
-          <div id="password-length-error" class="error-message"></div>
-        </div>
-      </div>
-      
-      <button id="generate-button" class="button primary">パスワードを生成</button>
+        <button id="generate-button" type="submit" class="button primary">パスワードを生成</button>
+      </form>
       
       <div class="info-container">
         <div class="info-section">

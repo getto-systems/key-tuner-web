@@ -127,7 +127,7 @@ export function registerWasmCallbacks(
 interface EventHandlerConfig<T extends HTMLElement> {
     element: T;
     event: string;
-    handler: (element: T) => void;
+    handler: (element: T, event: Event) => void;
 }
 
 /**
@@ -147,7 +147,7 @@ export function setupEventHandlers(
         {
             element: elements.passwordLength,
             event: "input",
-            handler: (input: HTMLInputElement) => {
+            handler: (input: HTMLInputElement, event: Event) => {
                 safeWasmCall(
                     () => wasm.set_password_length(input.value),
                     "パスワード長の設定に失敗しました",
@@ -159,7 +159,7 @@ export function setupEventHandlers(
         {
             element: elements.passwordLength,
             event: "focus",
-            handler: (input: HTMLInputElement) => {
+            handler: (input: HTMLInputElement, event: Event) => {
                 input.select(); // テキストを全選択
             },
         },
@@ -168,7 +168,7 @@ export function setupEventHandlers(
         {
             element: elements.passPhrase,
             event: "input",
-            handler: (input: HTMLInputElement) => {
+            handler: (input: HTMLInputElement, event: Event) => {
                 safeWasmCall(
                     () => wasm.set_pass_phrase(input.value),
                     "パスフレーズの設定に失敗しました",
@@ -180,7 +180,7 @@ export function setupEventHandlers(
         {
             element: elements.passPhrase,
             event: "focus",
-            handler: (input: HTMLInputElement) => {
+            handler: (input: HTMLInputElement, event: Event) => {
                 input.select(); // テキストを全選択
             },
         },
@@ -189,7 +189,7 @@ export function setupEventHandlers(
         {
             element: elements.serviceName,
             event: "input",
-            handler: (input: HTMLInputElement) => {
+            handler: (input: HTMLInputElement, event: Event) => {
                 safeWasmCall(
                     () => wasm.set_service_name(input.value),
                     "サービス名の設定に失敗しました",
@@ -201,7 +201,7 @@ export function setupEventHandlers(
         {
             element: elements.serviceName,
             event: "focus",
-            handler: (input: HTMLInputElement) => {
+            handler: (input: HTMLInputElement, event: Event) => {
                 input.select(); // テキストを全選択
             },
         },
@@ -210,7 +210,7 @@ export function setupEventHandlers(
         {
             element: elements.version,
             event: "input",
-            handler: (input: HTMLInputElement) => {
+            handler: (input: HTMLInputElement, event: Event) => {
                 safeWasmCall(
                     () => wasm.set_version(input.value),
                     "バージョンの設定に失敗しました",
@@ -222,7 +222,7 @@ export function setupEventHandlers(
         {
             element: elements.version,
             event: "focus",
-            handler: (input: HTMLInputElement) => {
+            handler: (input: HTMLInputElement, event: Event) => {
                 input.select(); // テキストを全選択
             },
         },
@@ -233,7 +233,7 @@ export function setupEventHandlers(
         Array.from(elements.passwordMode.elements).map((radio) => ({
             element: radio,
             event: "change",
-            handler: (radioInput: HTMLInputElement) => {
+            handler: (radioInput: HTMLInputElement, event: Event) => {
                 if (radioInput.checked) {
                     safeWasmCall(
                         () => wasm.set_password_mode(radioInput.value),
@@ -245,13 +245,15 @@ export function setupEventHandlers(
         })),
     );
 
-    // HTMLButtonElement のハンドラー
+    // フォームのsubmitイベントハンドラー
     register([
-        // パスワード生成ボタンのクリックイベント
         {
-            element: elements.generateButton,
-            event: "click",
-            handler: (button: HTMLButtonElement) => {
+            element: elements.passwordForm,
+            event: "submit",
+            handler: (form: HTMLFormElement, event: Event) => {
+                // デフォルトのフォーム送信を防止
+                event.preventDefault();
+                
                 safeWasmCall(
                     () => wasm.generate_password(),
                     "パスワードの生成に失敗しました",
@@ -259,12 +261,15 @@ export function setupEventHandlers(
                 );
             },
         },
+    ]);
 
+    // HTMLButtonElement のハンドラー
+    register([
         // コピーボタンのクリックイベント
         {
             element: elements.copyButton,
             event: "click",
-            handler: (button: HTMLButtonElement) => {
+            handler: (button: HTMLButtonElement, event: Event) => {
                 // WASMのcopy_generated_password関数を使用
                 safeWasmCall(
                     () => wasm.copy_generated_password(),
@@ -282,9 +287,9 @@ export function setupEventHandlers(
      */
     function register<T extends HTMLElement>(handlers: Array<EventHandlerConfig<T>>): void {
         handlers.forEach(({ element, event, handler }) => {
-            element.addEventListener(event, () => {
-                // 型安全のために同じ要素を渡す
-                handler(element);
+            element.addEventListener(event, (e) => {
+                // 型安全のために同じ要素と発生したイベントを渡す
+                handler(element, e);
             });
         });
     }
