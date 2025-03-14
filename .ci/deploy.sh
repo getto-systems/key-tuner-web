@@ -1,10 +1,6 @@
 #!/bin/bash
 set -e
 
-if [ -n "$DEPLOY_BASE_URL" ]; then
-    echo "DEPLOY_BASE_URL is not defined"
-    exit 1
-fi
 if [ -n "$AWS_ACCESS_KEY_ID" ]; then
     echo "AWS_ACCESS_KEY_ID is not defined"
     exit 1
@@ -30,7 +26,7 @@ npm ci
 npm run build:wasm
 npm run build
 
-echo "Deploying version $VERSION to $DEPLOY_BASE_URL/$VERSION/"
+echo "Deploying version $VERSION to aws s3://$S3_BUCKET/$VERSION"
 
 # Deploy to S3
 aws s3 sync web/dist s3://$S3_BUCKET/$VERSION
