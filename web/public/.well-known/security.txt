@@ -1,0 +1,21 @@
+# security.txt for key-tuner
+# https://securitytxt.org/
+
+# Security contact
+Contact: mailto:shun@getto.systems
+
+# Expiration date (1 year from creation)
+Expires: 2026-03-15T00:00:00.000Z
+
+# Canonical URL
+Canonical: https://key-tuner.getto.systems/.well-known/security.txt
+
+# Security policy
+Policy: https://key-tuner.getto.systems/security-policy.html
+
+# Preferred languages
+Preferred-Languages: en, ja
+
+# Project information
+# Key Tuner is a secure password generation tool using Rust/WebAssembly
+# https://github.com/yourusername/key-tuner

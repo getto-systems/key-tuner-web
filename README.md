@@ -15,6 +15,24 @@ Key Tuner is a secure password generation tool using Rust/WebAssembly. The front
   - Inclusion settings for uppercase/lowercase letters, numbers, and symbols
 - Simple and user-friendly UI
 
+## Security
+
+Key Tuner is designed with security as a top priority. The following security measures are implemented:
+
+- **Client-side Processing**: All password generation is performed within the user's browser, and generated passwords are not sent to any server.
+- **WebAssembly Isolation**: Core functionality is implemented in Rust and compiled to WebAssembly, ensuring high performance and security.
+- **Open Source**: The code is published under the GPL-3.0 license, allowing for community auditing.
+- **Minimal Dependencies**: External dependencies are kept to a minimum to reduce the risk of supply chain attacks.
+- **No Data Collection**: Key Tuner does not collect or store user data.
+
+### Vulnerability Reporting
+
+If you discover a security vulnerability, please report it to shun@getto.systems with "[Key Tuner Security]" in the subject line. Include details of the vulnerability, steps to reproduce, and potential impact.
+
+For critical security vulnerabilities, we aim to provide a fix within 72 hours. Security updates are announced on the project repository and website.
+
+For the full security policy, please visit: [Security Policy](https://key-tuner.getto.systems/security-policy.html)
+
 ## Project Structure
 
 ```
