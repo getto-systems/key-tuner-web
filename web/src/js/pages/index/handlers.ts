@@ -20,13 +20,13 @@ export function registerWasmCallbacks(
     const draw_generated_password = (password: string): void => {
         if (password === "") {
             // 空文字列の場合、パスワード出力を隠してプレースホルダーを表示
-            elements.passwordOutput.style.display = "none";
-            elements.passwordPlaceholder.style.display = "block";
+            elements.passwordOutput.classList.remove("show");
+            elements.passwordPlaceholder.classList.add("show");
         } else {
             // パスワードがある場合、パスワード出力を表示してプレースホルダーを隠す
             elements.passwordOutput.textContent = password;
-            elements.passwordOutput.style.display = "block";
-            elements.passwordPlaceholder.style.display = "none";
+            elements.passwordOutput.classList.add("show");
+            elements.passwordPlaceholder.classList.remove("show");
         }
     };
 
@@ -80,13 +80,13 @@ export function registerWasmCallbacks(
             .then(() => {
                 // コピー成功時の視覚的フィードバック
                 // コピーボタンを非表示にし、コピーしましたボタンを表示する
-                elements.copyButton.style.display = "none";
-                elements.copiedButton.style.display = "inline-block";
+                elements.copyButton.classList.remove("show");
+                elements.copiedButton.classList.add("show");
 
                 setTimeout(() => {
                     // 2秒後に元の状態に戻す
-                    elements.copyButton.style.display = "inline-block";
-                    elements.copiedButton.style.display = "none";
+                    elements.copyButton.classList.add("show");
+                    elements.copiedButton.classList.remove("show");
                 }, 2000);
             })
             .catch((err) => {

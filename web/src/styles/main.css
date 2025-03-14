@@ -58,6 +58,10 @@ header h1 {
   display: none; /* 初期状態では非表示 */
 }
 
+.password-output.show {
+  display: block;
+}
+
 .password-placeholder {
   flex-grow: 1;
   padding: 1rem;
@@ -65,6 +69,11 @@ header h1 {
   color: #888; /* プレースホルダーテキストの色を薄く */
   white-space: nowrap;
   overflow-x: auto;
+  display: none;
+}
+
+.password-placeholder.show {
+  display: block;
 }
 
 .controls {
@@ -106,6 +115,11 @@ header h1 {
 
 .fatal-error.show {
   display: block;
+}
+
+/* 要素を表示するためのユーティリティクラス */
+.button.show {
+  display: inline-block;
 }
 
 .fatal-error-content {
@@ -178,6 +192,7 @@ input[type="number"] {
   font-size: 1rem;
   transition: background-color 0.2s;
   white-space: nowrap;
+  display: none; /* デフォルトでは非表示 */
 }
 
 .button:hover {
@@ -189,6 +204,7 @@ input[type="number"] {
   padding: 1rem;
   width: 100%;
   font-size: 1.1rem;
+  display: block; /* プライマリボタンは常に表示 */
 }
 
 .button.primary:hover {

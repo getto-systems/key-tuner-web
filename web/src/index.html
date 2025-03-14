@@ -7,7 +7,7 @@
   <meta name="description" content="安全なパスワードを生成">
   
   <!-- セキュリティ関連のメタタグ -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self'; connect-src 'self';">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="X-Frame-Options" content="DENY">
   <meta name="referrer" content="no-referrer-when-downgrade">
@@ -35,9 +35,9 @@
     <main>
       <div class="password-container">
         <div id="password-output" class="password-output"></div>
-        <div id="password-placeholder" class="password-placeholder">パスワードがここに表示されます</div>
-        <button id="copy-button" class="button">コピー</button>
-        <button id="copied-button" class="button" style="display: none;">コピーしました！</button>
+        <div id="password-placeholder" class="password-placeholder show">パスワードがここに表示されます</div>
+        <button id="copy-button" class="button show">コピー</button>
+        <button id="copied-button" class="button">コピーしました！</button>
       </div>
       
       <form id="password-form">
