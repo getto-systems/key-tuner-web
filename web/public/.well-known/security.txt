@@ -18,4 +18,4 @@ Preferred-Languages: en, ja
 
 # Project information
 # Key Tuner is a secure password generation tool using Rust/WebAssembly
-# https://github.com/yourusername/key-tuner
+# https://github.com/getto-systems/key-tuner-web
