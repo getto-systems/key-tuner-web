@@ -2,6 +2,7 @@ stages:
     - test
     - bump_version
     - release
+    - release_notify
 
 variables:
     TRELLIS_GIT_POST: https://trellis.getto.systems/git/post/1.5.2
@@ -57,8 +58,54 @@ release:
             - triggers
             - schedules
 
+    image: buildpack-deps:latest
+
     variables:
         BUMP_MAINT_REPO_FILE: ".ci/bump-maint-repo.txt"
 
     script:
         - curl $TRELLIS_CI_BUMP_VERSION/push_tags.sh | sh
+
+release_success:
+    stage: release_notify
+    only:
+        refs:
+            - release@getto-systems-base/projects/key-tuner
+        changes:
+            - .release-version
+    except:
+        refs:
+            - triggers
+            - schedules
+    when: on_success
+
+    image: buildpack-deps:latest
+
+    before_script:
+        - export url=$GETTO_PSYCHER_URL?$GETTO_PSYCHER_TOKEN=true
+        - export channel=$SLACK_CHANNEL
+        - export version=rails:$(cat .release-version)
+    script:
+        - curl $TRELLIS_PSYCHER_GETTO/notify-release-success.sh | sh -s -- $url $channel $version
+
+release_failure:
+    stage: release_notify
+    only:
+        refs:
+            - release@getto-systems-base/projects/key-tuner
+        changes:
+            - .release-version
+    except:
+        refs:
+            - triggers
+            - schedules
+    when: on_failure
+
+    image: buildpack-deps:latest
+
+    before_script:
+        - export url=$GETTO_PSYCHER_URL?$GETTO_PSYCHER_TOKEN=true
+        - export channel=$SLACK_CHANNEL
+        - export version=rails:$(cat .release-version)
+    script:
+        - curl $TRELLIS_PSYCHER_GETTO/notify-release-failure.sh | sh -s -- $url $channel $version
