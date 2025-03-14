@@ -97,12 +97,12 @@ release_deploy:
 
 release_deploy_public:
     stage: release_deploy
-    only:
-        refs:
-            - release@getto-systems-base/projects/key-tuner
-        changes:
-            - .release-version
-            - web/public/**/*
+    rules:
+        - refs:
+              - release@getto-systems-base/projects/key-tuner
+          changes:
+              - .release-version
+              - web/public/**/*
     except:
         refs:
             - triggers
