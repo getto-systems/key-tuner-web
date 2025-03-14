@@ -55,6 +55,7 @@ cd key-tuner
 
 ```bash
 npm install
+cargo install wasm-pack
 ```
 
 3. Build WASM
