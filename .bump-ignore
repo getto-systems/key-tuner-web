@@ -1,4 +1,12 @@
 /*
+!/crates/
+/crates/*
+!/crates/core/
+/crates/core/*
 !/crates/core/src/
+!/crates/web/
+/crates/web/*
 !/crates/web/src/
+!/web/
+/web/*
 !/web/src/
