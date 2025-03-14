@@ -10,3 +10,4 @@
 !/web/
 /web/*
 !/web/src/
+!/web/public/
