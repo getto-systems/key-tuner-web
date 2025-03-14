@@ -1,6 +1,7 @@
 stages:
     - test
     - bump_version
+    - release
 
 variables:
     TRELLIS_GIT_POST: https://trellis.getto.systems/git/post/1.5.2
@@ -43,3 +44,21 @@ bump_version:
     script:
         - curl $TRELLIS_CI_BUMP_VERSION/bump_version.sh | bash
         - curl $TRELLIS_CI_BUMP_VERSION/request.sh | bash -s -- ./.ci/bump-message.sh
+
+release:
+    stage: release
+    only:
+        refs:
+            - release@getto-systems-base/projects/key-tuner
+        changes:
+            - .release-version
+    except:
+        refs:
+            - triggers
+            - schedules
+
+    variables:
+        BUMP_MAINT_REPO_FILE: ".ci/bump-maint-repo.txt"
+
+    script:
+        - curl $TRELLIS_CI_BUMP_VERSION/push_tags.sh | sh
