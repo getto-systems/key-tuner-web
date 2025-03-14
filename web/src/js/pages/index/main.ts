@@ -5,11 +5,30 @@ import { initDomElements } from "./elements";
 import { registerWasmCallbacks, setupEventHandlers, sendInitialValueToWasm } from "./handlers";
 import { checkAndRedirectToLatestVersion } from "../../common/version_checker";
 
+/**
+ * 指定されたバージョンのデプロイが存在するかチェックする
+ * @param {string} version - チェックするバージョン
+ * @returns {Promise<boolean>} デプロイが存在する場合はtrue
+ */
+async function checkVersionExists(version: string): Promise<boolean> {
+    const url = `https://key-tuner.getto.systems/${version}/index.html`;
+    const response = await fetch(url, { method: "HEAD" });
+    return response.ok;
+}
+
 // アプリケーションの起動
 window.addEventListener("DOMContentLoaded", async () => {
     // 最新バージョンのチェックとリダイレクト
-    await checkAndRedirectToLatestVersion();
-    
+    await checkAndRedirectToLatestVersion(
+        window.location,
+        checkVersionExists,
+        (version) => {
+            const newUrl = `https://key-tuner.getto.systems/${version}/index.html`;
+            window.location.href = newUrl;
+        },
+        "0.7.0", // デフォルトバージョン
+    );
+
     // DOMイベントのセットアップ
     setupDom();
 });

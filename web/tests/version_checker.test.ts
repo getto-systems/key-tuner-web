@@ -1,31 +1,21 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
     parseVersion,
     formatVersion,
     generateNextVersions,
-    checkVersionExists,
     findLatestVersion,
     redirectToLatestVersion,
+    extractVersionFromPath,
 } from "../src/js/common/version_checker";
 
+// Function to create a version checker that returns true for specified versions
+function initVersionChecker(validVersions: string[]): (version: string) => Promise<boolean> {
+    return async (version: string): Promise<boolean> => {
+        return validVersions.includes(version);
+    };
+}
+
 describe("Version Checker", () => {
-    // fetchのモック
-    beforeEach(() => {
-        // グローバルオブジェクトのモック
-        vi.stubGlobal("fetch", vi.fn());
-        vi.stubGlobal("window", {
-            location: {
-                href: "https://key-tuner.getto.systems/0.7.0/index.html",
-            },
-        });
-        vi.spyOn(console, "log").mockImplementation(() => {});
-        vi.spyOn(console, "error").mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
     describe("parseVersion", () => {
         it("正しいバージョン文字列をパースする", () => {
             const version = parseVersion("1.2.3");
@@ -59,86 +49,100 @@ describe("Version Checker", () => {
         });
     });
 
-    describe("checkVersionExists", () => {
-        it("バージョンが存在する場合はtrueを返す", async () => {
-            (fetch as any).mockResolvedValue({
-                ok: true,
-            });
+    describe("initVersionChecker", () => {
+        it("指定したバージョンが存在する場合はtrueを返す", async () => {
+            const versionChecker = initVersionChecker(["1.0.0", "2.0.0"]);
 
-            const exists = await checkVersionExists("1.0.0");
+            const exists = await versionChecker("1.0.0");
             expect(exists).toBe(true);
-            expect(fetch).toHaveBeenCalledWith("https://key-tuner.getto.systems/1.0.0/index.html", {
-                method: "HEAD",
-            });
         });
 
-        it("バージョンが存在しない場合はfalseを返す", async () => {
-            (fetch as any).mockResolvedValue({
-                ok: false,
-            });
+        it("指定したバージョンが存在しない場合はfalseを返す", async () => {
+            const versionChecker = initVersionChecker(["1.0.0", "2.0.0"]);
 
-            const exists = await checkVersionExists("1.0.0");
+            const exists = await versionChecker("3.0.0");
             expect(exists).toBe(false);
-        });
-
-        it("エラーが発生した場合はfalseを返す", async () => {
-            (fetch as any).mockRejectedValue(new Error("Network error"));
-
-            const exists = await checkVersionExists("1.0.0");
-            expect(exists).toBe(false);
-            expect(console.error).toHaveBeenCalled();
         });
     });
 
     describe("findLatestVersion", () => {
         it("より新しいバージョンが見つかった場合はそのバージョンを返す", async () => {
-            // 最初のチェック: メジャーバージョンアップが存在する
-            (fetch as any).mockResolvedValueOnce({
-                ok: true,
-            });
-            // 次のチェック: さらに新しいバージョンは存在しない
-            (fetch as any).mockResolvedValueOnce({
-                ok: false,
-            });
-            (fetch as any).mockResolvedValueOnce({
-                ok: false,
-            });
-            (fetch as any).mockResolvedValueOnce({
-                ok: false,
-            });
+            // 1.0.0のみが存在するバージョンチェッカーを作成
+            const versionChecker = initVersionChecker(["1.0.0"]);
 
-            const latestVersion = await findLatestVersion("0.7.0");
+            const latestVersion = await findLatestVersion("0.7.0", versionChecker);
             expect(latestVersion).toBe("1.0.0");
         });
 
         it("現在のバージョンが最新の場合はnullを返す", async () => {
-            // すべてのチェックで新しいバージョンは見つからない
-            (fetch as any).mockResolvedValue({
-                ok: false,
-            });
+            // 存在するバージョンがないバージョンチェッカーを作成
+            const versionChecker = initVersionChecker([]);
 
-            const latestVersion = await findLatestVersion("0.7.0");
+            const latestVersion = await findLatestVersion("0.7.0", versionChecker);
             expect(latestVersion).toBeNull();
+        });
+
+        it("複数のバージョンが存在する場合は最新のバージョンを返す", async () => {
+            // 複数のバージョンが存在するバージョンチェッカーを作成
+            const versionChecker = initVersionChecker([
+                "2.0.0",
+                "1.2.0",
+                "1.1.0",
+                "1.0.0",
+                "0.5.0",
+                "0.4.0",
+            ]);
+
+            const latestVersion = await findLatestVersion("0.4.0", versionChecker);
+            expect(latestVersion).toBe("2.0.0");
         });
     });
 
     describe("redirectToLatestVersion", () => {
         it("より新しいバージョンが見つかった場合はリダイレクトしてtrueを返す", async () => {
-            // モックバージョンファインダー関数
-            const mockVersionFinder = vi.fn().mockResolvedValue("1.0.0");
+            // 1.0.0のみが存在するバージョンチェッカーを作成
+            const versionChecker = initVersionChecker(["1.0.0"]);
+            let href = "";
 
-            const redirected = await redirectToLatestVersion("0.7.0", mockVersionFinder);
+            const redirected = await redirectToLatestVersion("0.7.0", versionChecker, (version) => {
+                href = `https://key-tuner.getto.systems/${version}/index.html`;
+            });
             expect(redirected).toBe(true);
-            expect(window.location.href).toBe("https://key-tuner.getto.systems/1.0.0/index.html");
+            expect(href).toBe("https://key-tuner.getto.systems/1.0.0/index.html");
         });
 
         it("現在のバージョンが最新の場合はリダイレクトせずfalseを返す", async () => {
-            // モックバージョンファインダー関数
-            const mockVersionFinder = vi.fn().mockResolvedValue(null);
+            // 存在するバージョンがないバージョンチェッカーを作成
+            const versionChecker = initVersionChecker([]);
+            let href = "";
 
-            const redirected = await redirectToLatestVersion("0.7.0", mockVersionFinder);
+            const redirected = await redirectToLatestVersion("0.7.0", versionChecker, (version) => {
+                href = `https://key-tuner.getto.systems/${version}/index.html`;
+            });
             expect(redirected).toBe(false);
-            expect(window.location.href).toBe("https://key-tuner.getto.systems/0.7.0/index.html");
+            expect(href).toBe("");
+        });
+    });
+
+    describe("extractVersionFromPath", () => {
+        it("パスからバージョンを正しく抽出する", () => {
+            // pathnameプロパティを持つオブジェクトを作成
+            const pathProvider = {
+                pathname: "/0.7.0/index.html",
+            };
+
+            const version = extractVersionFromPath(pathProvider);
+            expect(version).toBe("0.7.0");
+        });
+
+        it("パスにバージョンがない場合はnullを返す", () => {
+            // バージョンがないパス
+            const pathProvider = {
+                pathname: "/index.html",
+            };
+
+            const version = extractVersionFromPath(pathProvider);
+            expect(version).toBeNull(); // バージョンが見つからない場合はnull
         });
     });
 });
