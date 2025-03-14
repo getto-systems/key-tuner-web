@@ -23,8 +23,8 @@ VERSION=$(cat .release-version)
 echo "Deploying web/public to aws s3://$S3_BUCKET/"
 
 # Deploy to S3
-aws s3 sync web/public/index.html s3://$S3_BUCKET/index.html
-aws s3 sync web/public/security-policy.html s3://$S3_BUCKET/security-policy.html
+aws s3 cp web/public/index.html s3://$S3_BUCKET/index.html
+aws s3 cp web/public/security-policy.html s3://$S3_BUCKET/security-policy.html
 aws s3 sync web/public/.well-known s3://$S3_BUCKET/.well-known
 
 echo "Deployment of version $VERSION completed successfully"
