@@ -7,8 +7,8 @@ import {
     checkAndRedirectToLatestVersion,
     extractVersionFromPath,
     compareVersions,
+    replaceVersionInUrl,
     VersionExistenceChecker,
-    RedirectHandler,
     PathProvider,
 } from "../src/js/common/version_checker";
 
@@ -120,14 +120,14 @@ describe("Version Checker", () => {
                 pathname: "/0.7.0/index.html",
             };
 
-            const redirected = await checkAndRedirectToLatestVersion(
-                pathProvider,
-                versionChecker,
-                (version) => {
+            const redirected = await checkAndRedirectToLatestVersion({
+                currentLocation: pathProvider,
+                versionExistenceChecker: versionChecker,
+                redirectHandler: (version) => {
                     href = `https://key-tuner.getto.systems/${version}/index.html`;
                 },
-                "0.7.0"
-            );
+                defaultVersion: "0.7.0"
+            });
             
             expect(redirected).toBe(true);
             expect(href).toBe("https://key-tuner.getto.systems/1.0.0/index.html");
@@ -142,14 +142,14 @@ describe("Version Checker", () => {
                 pathname: "/0.7.0/index.html",
             };
 
-            const redirected = await checkAndRedirectToLatestVersion(
-                pathProvider,
-                versionChecker,
-                (version) => {
+            const redirected = await checkAndRedirectToLatestVersion({
+                currentLocation: pathProvider,
+                versionExistenceChecker: versionChecker,
+                redirectHandler: (version) => {
                     href = `https://key-tuner.getto.systems/${version}/index.html`;
                 },
-                "0.7.0"
-            );
+                defaultVersion: "0.7.0"
+            });
             
             expect(redirected).toBe(false);
             expect(href).toBe("");
@@ -175,6 +175,40 @@ describe("Version Checker", () => {
 
             const version = extractVersionFromPath(pathProvider);
             expect(version).toBeNull(); // バージョンが見つからない場合はnull
+        });
+    });
+
+    describe("replaceVersionInUrl", () => {
+        it("URLのバージョン部分を正しく置換する", () => {
+            const currentUrl = "https://example.com/1.2.3/index.html";
+            const newVersion = "2.0.0";
+            
+            const newUrl = replaceVersionInUrl(currentUrl, newVersion);
+            expect(newUrl).toBe("https://example.com/2.0.0/index.html");
+        });
+
+        it("複雑なURLでもバージョン部分を正しく置換する", () => {
+            const currentUrl = "https://key-tuner.getto.systems/0.7.0/index.html?param=value#hash";
+            const newVersion = "1.0.0";
+            
+            const newUrl = replaceVersionInUrl(currentUrl, newVersion);
+            expect(newUrl).toBe("https://key-tuner.getto.systems/1.0.0/index.html?param=value#hash");
+        });
+
+        it("URLにバージョン部分がない場合はnullを返す", () => {
+            const currentUrl = "https://example.com/index.html";
+            const newVersion = "2.0.0";
+            
+            const newUrl = replaceVersionInUrl(currentUrl, newVersion);
+            expect(newUrl).toBeNull();
+        });
+
+        it("バージョンパターンが複数ある場合は最初のパターンのみを置換する", () => {
+            const currentUrl = "https://example.com/1.2.3/docs/4.5.6/index.html";
+            const newVersion = "2.0.0";
+            
+            const newUrl = replaceVersionInUrl(currentUrl, newVersion);
+            expect(newUrl).toBe("https://example.com/2.0.0/docs/4.5.6/index.html");
         });
     });
 });

@@ -58,8 +58,8 @@ export interface SemanticVersion {
  * // 実装例: HTTPリクエストでバージョンディレクトリの存在を確認
  * const checkVersionExists: VersionExistenceChecker = async (version) => {
  *   try {
- *     const response = await fetch(`/api/versions/${version}`);
- *     return response.status === 200;
+ *     const response = await fetch(`https://example.com/${version}/index.html`, { method: 'HEAD' });
+ *     return response.ok;
  *   } catch (e) {
  *     return false;
  *   }
@@ -77,7 +77,13 @@ export type VersionExistenceChecker = (version: string) => Promise<boolean>;
  * @returns {void}
  *
  * @example
- * // 実装例: window.locationを使用したリダイレクト
+ * // 実装例: 絶対URLを使用したリダイレクト
+ * const redirectToVersion: RedirectHandler = (version) => {
+ *   window.location.href = `https://example.com/${version}/index.html`;
+ * };
+ *
+ * @example
+ * // 実装例: 相対パスを使用したリダイレクト
  * const redirectToVersion: RedirectHandler = (version) => {
  *   const currentPath = window.location.pathname;
  *   const newPath = currentPath.replace(/\/\d+\.\d+\.\d+\//, `/${version}/`);
@@ -85,6 +91,32 @@ export type VersionExistenceChecker = (version: string) => Promise<boolean>;
  * };
  */
 export type RedirectHandler = (version: string) => void;
+
+/**
+ * バージョンチェッカーの設定オプション
+ */
+export interface VersionCheckerOptions {
+    /**
+     * 現在のロケーション（URLパス情報を持つオブジェクト）
+     */
+    currentLocation: PathProvider;
+    
+    /**
+     * バージョンの存在をチェックする関数
+     */
+    versionExistenceChecker: VersionExistenceChecker;
+    
+    /**
+     * リダイレクト処理を行う関数
+     */
+    redirectHandler: RedirectHandler;
+    
+    /**
+     * バージョンが取得できなかった場合のデフォルトバージョン
+     * 呼び出し側が必ず指定する必要があります
+     */
+    defaultVersion: string;
+}
 
 /**
  * アプリケーション起動時に最新バージョンチェックを実行する
@@ -99,30 +131,28 @@ export type RedirectHandler = (version: string) => void;
  * 3. 最新バージョンを探索
  * 4. 現在のバージョンより新しいバージョンが見つかった場合はリダイレクト
  *
- * @param {PathProvider} currentLocation - 現在のロケーション（URLパス情報を持つオブジェクト）
- * @param {VersionExistenceChecker} versionExistenceChecker - バージョンの存在をチェックする関数
- * @param {RedirectHandler} redirectHandler - リダイレクト処理を行う関数
- * @param {string} defaultVersion - バージョンが取得できなかった場合のデフォルトバージョン
+ * @param {VersionCheckerOptions} options - バージョンチェッカーの設定オプション
  * @returns {Promise<boolean>} リダイレクトした場合はtrue、しなかった場合はfalse
  *
  * @example
  * // 使用例
  * const checkLatestVersion = async () => {
- *   const result = await checkAndRedirectToLatestVersion(
- *     window.location,
- *     async (version) => {
+ *   const result = await checkAndRedirectToLatestVersion({
+ *     currentLocation: window.location,
+ *     versionExistenceChecker: async (version) => {
  *       try {
- *         const response = await fetch(`/${version}/index.html`, { method: 'HEAD' });
+ *         const response = await fetch(`https://example.com/${version}/index.html`, { method: 'HEAD' });
  *         return response.ok;
  *       } catch {
  *         return false;
  *       }
  *     },
- *     (version) => {
- *       window.location.href = `/${version}/index.html`;
+ *     redirectHandler: (version) => {
+ *       window.location.href = `https://example.com/${version}/index.html`;
  *     },
- *     "1.0.0"
- *   );
+ *     // 必須パラメータ: URLからバージョンが取得できない場合に使用されるデフォルトバージョン
+ *     defaultVersion: "1.0.0"
+ *   });
  *
  *   if (!result) {
  *     console.log("現在最新バージョンを使用しています");
@@ -130,11 +160,14 @@ export type RedirectHandler = (version: string) => void;
  * };
  */
 export async function checkAndRedirectToLatestVersion(
-    currentLocation: PathProvider,
-    versionExistenceChecker: VersionExistenceChecker,
-    redirectHandler: RedirectHandler,
-    defaultVersion: string,
+    options: VersionCheckerOptions
 ): Promise<boolean> {
+    const {
+        currentLocation,
+        versionExistenceChecker,
+        redirectHandler,
+        defaultVersion
+    } = options;
     const currentVersion = extractVersionFromPath(currentLocation);
     // バージョンが取得できなかった場合はデフォルトバージョンを使用
     const versionToUse = currentVersion ?? defaultVersion;
@@ -410,6 +443,39 @@ async function findHighestExistingVersion(
     }
 
     return highestVersion;
+}
+
+/**
+ * URLの中のバージョン部分を置換する
+ *
+ * 指定されたURLの中のバージョン部分を新しいバージョンに置換します。
+ * バージョンパターン（/VERSION/）が見つからない場合はnullを返します。
+ * この関数は、バージョンアップデート時のリダイレクト処理で使用されます。
+ *
+ * @param {string} currentUrl - 現在のURL
+ * @param {string} version - 置換する新しいバージョン
+ * @returns {string | null} 置換後のURL、またはパターンが見つからない場合はnull
+ *
+ * @example
+ * // バージョンを置換
+ * const newUrl = replaceVersionInUrl('https://example.com/1.2.3/index.html', '2.0.0');
+ * // 結果: 'https://example.com/2.0.0/index.html'
+ *
+ * // バージョンパターンが見つからない場合
+ * const noMatch = replaceVersionInUrl('https://example.com/index.html', '2.0.0');
+ * // 結果: null
+ */
+export function replaceVersionInUrl(currentUrl: string, version: string): string | null {
+    // /1.2.3/ のようなバージョン文字列パターンを検索して置換
+    const versionPattern = /\/([0-9]+\.[0-9]+\.[0-9]+)\//;
+    const newUrl = currentUrl.replace(versionPattern, `/${version}/`);
+
+    // 置換が行われなかった場合（パターンが見つからなかった場合）
+    if (newUrl === currentUrl) {
+        return null;
+    }
+
+    return newUrl;
 }
 
 /**
