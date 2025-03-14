@@ -2,6 +2,7 @@ stages:
     - test
     - bump_version
     - release
+    - release_deploy
     - release_notify
 
 variables:
@@ -65,6 +66,35 @@ release:
 
     script:
         - curl $TRELLIS_CI_BUMP_VERSION/push_tags.sh | sh
+
+release_deploy:
+    stage: release_deploy
+    only:
+        refs:
+            - release@getto-systems-base/projects/key-tuner
+        changes:
+            - .release-version
+    except:
+        refs:
+            - triggers
+            - schedules
+    when: on_success
+
+    image: node:latest
+
+    # Add the following environment variables in CI/CD configuration
+    # DEPLOY_BASE_URL: "https://key-tuner.getto.systems"
+    # AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    # AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    # AWS_DEFAULT_REGION: "ap-northeast-1"
+    # S3_BUCKET: "key-tuner.getto.systems"
+
+    before_script:
+        - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        - . "$HOME/.cargo/env"
+        - apt-get update && apt-get install -y awscli
+    script:
+        - ./.ci/deploy.sh
 
 release_success:
     stage: release_notify
