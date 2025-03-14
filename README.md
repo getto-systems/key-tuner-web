@@ -22,6 +22,8 @@ key-tuner/
 ├── crates/                     # Rust crates
 │   ├── core/                   # Core logic (password generation, etc.)
 │   └── web/                    # Web-oriented WASM implementation
+├── references/                 # Reference implementations
+│   └── tune.sh                 # Original bash script for password generation
 ├── web/                        # Web frontend
 │   ├── public/                 # Static files
 │   ├── src/                    # Source code
