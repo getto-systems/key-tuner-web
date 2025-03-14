@@ -1,5 +1,11 @@
 stages:
     - test
+    - bump_version
+
+variables:
+    TRELLIS_GIT_POST: https://trellis.getto.systems/git/post/1.5.2
+    TRELLIS_CI_BUMP_VERSION: https://trellis.getto.systems/ci/bump-version/1.10.2
+    TRELLIS_PSYCHER_GETTO: https://trellis.getto.systems/psycher/getto/2.7.2
 
 test:
     stage: test
@@ -15,3 +21,22 @@ test:
         - npm ci
     script:
         - npm test
+
+bump_version:
+    stage: bump_version
+    only:
+        refs:
+            - triggers
+        variables:
+            - $RELEASE
+
+    image: node:latest
+
+    before_script:
+        - git config user.email admin@getto.systems
+        - git config user.name getto
+        - curl $TRELLIS_GIT_POST/setup.sh | sh -s -- ./vendor/getto-systems
+        - export PATH=$PATH:./vendor/getto-systems/git-post/bin
+    script:
+        - curl $TRELLIS_CI_BUMP_VERSION/bump_version.sh | bash
+        - curl $TRELLIS_CI_BUMP_VERSION/request.sh | bash -s -- ./.ci/bump_version.sh
