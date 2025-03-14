@@ -21,14 +21,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         await checkAndRedirectToLatestVersion({
             currentLocation: window.location,
             versionExistenceChecker: async (version) => {
-                // 現在のURLから新しいバージョンのURLを生成
-                const currentUrl = window.location.href;
-                const newUrl = replaceVersionInUrl(currentUrl, version);
-
-                // URLの置換に失敗した場合は fetch せずにこのバージョンが存在しなかったものとして扱う
-                if (newUrl === null) {
-                    return false;
-                }
+                // 現在のURLから新しいバージョンのURLを生成。どのバージョンにも存在する index.html が存在するかどうかを確認する
+                const newUrl = `${window.location.origin}/${version}/index.html`;
 
                 const response = await fetch(newUrl, { method: "HEAD" });
                 return response.ok;
