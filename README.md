@@ -81,7 +81,7 @@ npm run build:wasm
 npm run build
 ```
 
-The build output will be in the `web/dist/{VERSION}` directory, where `{VERSION}` is the current version from the `.release-version` file.
+The build output will be in the `web/dist` directory.
 
 ## Deployment
 
