@@ -33,4 +33,9 @@ echo "Deploying version $VERSION to aws s3://$S3_BUCKET/$VERSION"
 # Deploy to S3
 aws s3 sync web/dist s3://$S3_BUCKET/$VERSION
 
+# static contents
+aws s3 cp web/public/index.html s3://$S3_BUCKET/index.html
+aws s3 cp web/public/security-policy.html s3://$S3_BUCKET/security-policy.html
+aws s3 sync web/public/.well-known s3://$S3_BUCKET/.well-known
+
 echo "Deployment of version $VERSION completed successfully"
