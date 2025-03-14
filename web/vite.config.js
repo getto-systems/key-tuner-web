@@ -8,7 +8,9 @@ const version = fs.readFileSync(resolve(__dirname, '../.release-version'), 'utf-
 export default defineConfig({
   // ルートディレクトリを指定
   root: 'src',
-  
+
+  publicDir: resolve(__dirname, 'public'),
+
   // vite-plugin-wasm-packを使用せず、直接WebAssemblyモジュールをインポート
   resolve: {
     alias: {
