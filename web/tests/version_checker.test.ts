@@ -2,14 +2,18 @@ import { describe, it, expect } from "vitest";
 import {
     parseVersion,
     formatVersion,
-    generateNextVersions,
+    generateVersionCandidates,
     findLatestVersion,
-    redirectToLatestVersion,
+    checkAndRedirectToLatestVersion,
     extractVersionFromPath,
+    compareVersions,
+    VersionExistenceChecker,
+    RedirectHandler,
+    PathProvider,
 } from "../src/js/common/version_checker";
 
 // Function to create a version checker that returns true for specified versions
-function initVersionChecker(validVersions: string[]): (version: string) => Promise<boolean> {
+function initVersionChecker(validVersions: string[]): VersionExistenceChecker {
     return async (version: string): Promise<boolean> => {
         return validVersions.includes(version);
     };
@@ -36,10 +40,18 @@ describe("Version Checker", () => {
         });
     });
 
-    describe("generateNextVersions", () => {
-        it("現在のバージョンから次のバージョンを生成する", () => {
+    describe("compareVersions", () => {
+        it("バージョンを正しく比較する", () => {
+            expect(compareVersions({ major: 1, minor: 2, patch: 3 }, { major: 1, minor: 2, patch: 3 })).toBe(0);
+            expect(compareVersions({ major: 2, minor: 0, patch: 0 }, { major: 1, minor: 9, patch: 9 })).toBe(1);
+            expect(compareVersions({ major: 1, minor: 2, patch: 3 }, { major: 1, minor: 3, patch: 0 })).toBe(-1);
+        });
+    });
+
+    describe("generateVersionCandidates", () => {
+        it("現在のバージョンから次のバージョン候補を生成する", () => {
             const currentVersion = { major: 1, minor: 2, patch: 3 };
-            const nextVersions = generateNextVersions(currentVersion);
+            const nextVersions = generateVersionCandidates(currentVersion);
 
             expect(nextVersions).toEqual([
                 { major: 2, minor: 0, patch: 0 }, // メジャーバージョンアップ
@@ -98,15 +110,25 @@ describe("Version Checker", () => {
         });
     });
 
-    describe("redirectToLatestVersion", () => {
+    describe("checkAndRedirectToLatestVersion", () => {
         it("より新しいバージョンが見つかった場合はリダイレクトしてtrueを返す", async () => {
             // 1.0.0のみが存在するバージョンチェッカーを作成
             const versionChecker = initVersionChecker(["1.0.0"]);
             let href = "";
+            
+            const pathProvider: PathProvider = {
+                pathname: "/0.7.0/index.html",
+            };
 
-            const redirected = await redirectToLatestVersion("0.7.0", versionChecker, (version) => {
-                href = `https://key-tuner.getto.systems/${version}/index.html`;
-            });
+            const redirected = await checkAndRedirectToLatestVersion(
+                pathProvider,
+                versionChecker,
+                (version) => {
+                    href = `https://key-tuner.getto.systems/${version}/index.html`;
+                },
+                "0.7.0"
+            );
+            
             expect(redirected).toBe(true);
             expect(href).toBe("https://key-tuner.getto.systems/1.0.0/index.html");
         });
@@ -115,10 +137,20 @@ describe("Version Checker", () => {
             // 存在するバージョンがないバージョンチェッカーを作成
             const versionChecker = initVersionChecker([]);
             let href = "";
+            
+            const pathProvider: PathProvider = {
+                pathname: "/0.7.0/index.html",
+            };
 
-            const redirected = await redirectToLatestVersion("0.7.0", versionChecker, (version) => {
-                href = `https://key-tuner.getto.systems/${version}/index.html`;
-            });
+            const redirected = await checkAndRedirectToLatestVersion(
+                pathProvider,
+                versionChecker,
+                (version) => {
+                    href = `https://key-tuner.getto.systems/${version}/index.html`;
+                },
+                "0.7.0"
+            );
+            
             expect(redirected).toBe(false);
             expect(href).toBe("");
         });
