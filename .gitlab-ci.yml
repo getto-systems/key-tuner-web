@@ -1,0 +1,16 @@
+stages:
+    - test
+
+test:
+    stage: test
+    only:
+        refs:
+            - schedules
+
+    image: node:latest
+
+    before_script:
+        - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        - npm ci
+    script:
+        - npm test

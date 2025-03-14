@@ -15,6 +15,10 @@
             "editor.insertSpaces": true,
             "editor.detectIndentation": false
         },
+        "[yaml]": {
+            "editor.insertSpaces": true,
+            "editor.tabSize": 4
+        },
         "prettier.semi": true
     }
 }
