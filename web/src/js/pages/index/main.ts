@@ -2,7 +2,8 @@
 
 import { initKeyTunerWasm } from "../../wasm_artifacts/key_tuner_wasm";
 import { checkAndRedirectToLatestVersion, replaceVersionInUrl } from "../../common/version_checker";
-import { initDomElements } from "./elements";
+import { FatalErrorHandler } from "../../common/fatal_error";
+import { initDomElements, DomElements } from "./elements";
 import { registerWasmCallbacks, setupEventHandlers, sendInitialValueToWasm } from "./handlers";
 
 // アプリケーションの起動
@@ -54,9 +55,9 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 /**
  * DOM要素のセットアップとイベントハンドラの登録
- * @returns {object|null} fatalError オブジェクト、または初期化失敗時はnull
+ * @returns {FatalErrorHandler<DomElements>|null} fatalError オブジェクト、または初期化失敗時はnull
  */
-async function setupDom(): Promise<{ show: (message: string) => void } | null> {
+async function setupDom(): Promise<FatalErrorHandler<DomElements> | null> {
     // DOM要素とエラーハンドラを初期化
     const domInit = initDomElements();
 
